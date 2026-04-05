@@ -54,3 +54,10 @@ archive/
 *.tmp
 *.bak
 *.orig
+
+# Test artifacts and generated code (should not be committed)
+tasks/
+src/
+package.json
+package-lock.json
+node_modules/
