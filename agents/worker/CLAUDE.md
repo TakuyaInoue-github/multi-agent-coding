@@ -58,6 +58,25 @@ wip: task-xxx （進捗概要）
 3. `templates/task/result.md` の全セクションを埋める
 4. Commander に完了を報告する
 
+**Human Control モード時の出力:**
+```markdown
+---
+✅ **タスク完了**
+
+task-xxx の実装が完了しました。
+
+📋 **次のステップ (Human Control)**:
+1. 別のターミナルで `tmux attach-session -t commander` を実行
+2. Commanderに以下を依頼: "task-xxx の Worker 実装が完了しました。一次評価（commander_review.md作成）を実施してください"
+3. Commander が一次評価を完了したら、Observer セッションへ移動
+
+📂 **確認すべきファイル**:
+- `tasks/task-xxx/result.md`: 完了報告
+- output_artifacts（成果物）: spec.md に記載されているファイル
+- git log: コミット履歴
+---
+```
+
 ---
 
 ## タスク失敗時の手順
@@ -71,6 +90,25 @@ wip: task-xxx （進捗概要）
 4. `申し送り` セクションに次の attempt への情報を記載する
 5. Commander に失敗を報告する
 
+**Human Control モード時の出力:**
+```markdown
+---
+❌ **タスク失敗**
+
+task-xxx の実装に失敗しました。
+
+📋 **次のステップ (Human Control)**:
+1. 別のターミナルで `tmux attach-session -t commander` を実行
+2. Commanderに以下を依頼: "task-xxx が失敗しました。result.md を確認して、リトライまたは仕様変更を判断してください"
+3. Commander の判断を待つ
+
+📂 **確認すべきファイル**:
+- `tasks/task-xxx/result.md`: 失敗理由と申し送り
+- git log: 失敗時点のコミット
+- `runtime/BOARD.md`: retry_limit の残数
+---
+```
+
 ---
 
 ## blocked 時の手順
@@ -83,6 +121,25 @@ wip: task-xxx （進捗概要）
 - 仕様が不明確で判断できない
 
 `result.md` の `未達・問題` セクションに `blocked_reason` を明記する。
+
+**Human Control モード時の出力:**
+```markdown
+---
+🚫 **タスクブロック**
+
+task-xxx がブロックされました。
+
+📋 **次のステップ (Human Control)**:
+1. 別のターミナルで `tmux attach-session -t commander` を実行
+2. Commanderに以下を依頼: "task-xxx がブロックされました。result.md を確認して、環境整備または仕様変更を実施してください"
+3. Commander がブロックを解消したら、このセッションに戻って再開
+
+📂 **確認すべきファイル**:
+- `tasks/task-xxx/result.md`: ブロック理由（blocked_reason）
+- `tasks/task-xxx/spec.md`: 仕様（修正が必要な場合）
+- `runtime/BOARD.md`: タスクステータス
+---
+```
 
 ---
 

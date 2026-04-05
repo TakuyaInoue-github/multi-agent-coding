@@ -38,6 +38,43 @@ Commander が前進を急いでいるときこそ慎重に評価してくださ�
    - warning → `runtime/EVENTLOG.json` に記録するのみ
    - fail → `runtime/DISCUSSION.md` に起票する
 
+**Human Control モード時の出力（PASS の場合）:**
+```markdown
+---
+✅ **Gate1 評価完了: PASS**
+
+task-xxx の Gate1 評価が完了しました。
+
+📋 **次のステップ (Human Control)**:
+1. 別のターミナルで `tmux attach-session -t commander` を実行
+2. Commanderに以下を確認: "task-xxx が Gate1 を通過しました。Worker への着手許可を出してください"
+3. Commander が着手許可を出したら、Worker セッションへ移動
+
+📂 **確認すべきファイル**:
+- `tasks/task-xxx/observer_review.md`: 評価結果
+- `runtime/BOARD.md`: タスクステータス
+---
+```
+
+**Human Control モード時の出力（FAIL の場合）:**
+```markdown
+---
+⚠️ **Gate1 評価完了: FAIL**
+
+task-xxx の Gate1 評価で問題を検出しました。
+
+📋 **次のステップ (Human Control)**:
+1. 別のターミナルで `tmux attach-session -t commander` を実行
+2. Commanderに以下を依頼: "task-xxx の Gate1 評価で fail が出ました。DISCUSSION.md を確認して対応してください"
+3. Commander が修正を完了したら、このセッションに戻って再評価
+
+📂 **確認すべきファイル**:
+- `tasks/task-xxx/observer_review.md`: 評価結果（verdict: fail）
+- `runtime/DISCUSSION.md`: 指摘事項
+- `runtime/EVENTLOG.json`: イベント記録
+---
+```
+
 ---
 
 ## Gate2 評価の手順
@@ -54,6 +91,45 @@ Commander が前進を急いでいるときこそ慎重に評価してくださ�
    - pass → 何もしない（Commander が develop へマージ）
    - warning → `runtime/EVENTLOG.json` に記録するのみ
    - fail → `runtime/DISCUSSION.md` に起票する
+
+**Human Control モード時の出力（PASS の場合）:**
+```markdown
+---
+✅ **Gate2 評価完了: PASS**
+
+task-xxx の Gate2 評価が完了しました。タスクは正常に完了しています。
+
+📋 **次のステップ (Human Control)**:
+1. 別のターミナルで `tmux attach-session -t commander` を実行
+2. Commanderに以下を依頼: "task-xxx が Gate2 を通過しました。develop へマージしてください"
+3. マージ完了後、次のタスクへ進む
+
+📂 **確認すべきファイル**:
+- `tasks/task-xxx/observer_review.md`: 評価結果（verdict: pass）
+- `tasks/task-xxx/result.md`: Worker の成果物
+- 成果物の実ファイル（output_artifacts）
+---
+```
+
+**Human Control モード時の出力（FAIL の場合）:**
+```markdown
+---
+⚠️ **Gate2 評価完了: FAIL**
+
+task-xxx の Gate2 評価で問題を検出しました。
+
+📋 **次のステップ (Human Control)**:
+1. 別のターミナルで `tmux attach-session -t commander` を実行
+2. Commanderに以下を依頼: "task-xxx の Gate2 評価で fail が出ました。DISCUSSION.md を確認して対応してください"
+3. Commander が Worker に再指示を出すか、修正を指示
+4. 修正完了後、このセッションに戻って再評価
+
+📂 **確認すべきファイル**:
+- `tasks/task-xxx/observer_review.md`: 評価結果（verdict: fail）
+- `runtime/DISCUSSION.md`: 指摘事項
+- `tasks/task-xxx/result.md`: Worker の成果物
+---
+```
 
 ---
 
@@ -110,6 +186,41 @@ Commander が `runtime/DISCUSSION.md` に応答したら：
    - 受け入れ：修正後の spec.md or result.md を再評価する
    - 維持：根拠を明記して議論継続
 3. `runtime/BOARD.md` の `policy.discussion_round_limit` を超えた場合は Commander に上告義務があることを明示する
+
+**Human Control モード時の出力（受け入れの場合）:**
+```markdown
+---
+✅ **Commander 応答を受け入れ**
+
+Commander の修正内容を受け入れ、再評価を実施します。
+
+📋 **次のステップ (Human Control)**:
+1. このセッションで引き続き再評価を実施
+2. 再評価結果を確認後、Commander セッションに戻る
+
+📂 **確認すべきファイル**:
+- `runtime/DISCUSSION.md`: 議論内容と解決状況
+- `tasks/task-xxx/observer_review.md`: 再評価結果
+---
+```
+
+**Human Control モード時の出力（維持の場合）:**
+```markdown
+---
+⚠️ **議論継続**
+
+Commander の応答に対して反論を記載しました。
+
+📋 **次のステップ (Human Control)**:
+1. 別のターミナルで `tmux attach-session -t commander` を実行
+2. Commanderに以下を依頼: "DISCUSSION.md の Observer 応答を確認してください"
+3. Commander の次の応答を待つ
+
+📂 **確認すべきファイル**:
+- `runtime/DISCUSSION.md`: 反論内容
+- `runtime/BOARD.md`: discussion_round_limit の残数
+---
+```
 
 ---
 

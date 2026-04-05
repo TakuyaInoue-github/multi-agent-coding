@@ -14,13 +14,33 @@ Worker    (Codex)        → 実装・テスト・デバッグ
 
 ## クイックスタート
 
-詳細は [docs/GUIDE.md](docs/GUIDE.md) を参照してください。
+### 複数セッションでの起動（推奨）
 
-### セッション開始
+真のマルチエージェントシステムとして動作させるには、3つの独立したClaude Codeセッションを起動します：
+
+```bash
+# 自動起動スクリプトを使用
+./scripts/launch-agents-worktree.sh
+
+# セッションに接続
+tmux attach-session -t commander   # Commander
+tmux attach-session -t observer    # Observer
+tmux attach-session -t worker-1    # Worker
+
+# デタッチ: Ctrl+B then D
+```
+
+詳細は [docs/MULTI_SESSION_WORKFLOW.md](docs/MULTI_SESSION_WORKFLOW.md) を参照してください。
+
+### シングルセッションでの起動（開発・テスト用）
+
+1つのセッションで全エージェントをシミュレーション：
 
 1. `runtime/` ディレクトリの状態ファイルを確認
 2. Commander セッションを起動
 3. `agents/commander/CLAUDE.md` をシステムプロンプトとして使用
+
+詳細は [docs/GUIDE.md](docs/GUIDE.md) を参照してください。
 
 ## ディレクトリ構造
 
@@ -71,6 +91,14 @@ Commander と Observer は Claude Code の Skills 機構を活用します：
 - **ステータス管理**: `/sync-status` で監査証跡を自動記録
 
 詳細は [.claude/skills/README.md](.claude/skills/README.md) を参照してください。
+
+## テスト方法
+
+マルチセッションシステムのテスト手順を記載する
+
+## テスト
+
+このシステムのテスト結果
 
 ## ドキュメント
 

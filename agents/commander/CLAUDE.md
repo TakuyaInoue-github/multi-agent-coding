@@ -49,6 +49,25 @@ Skillを使用しない場合は以下の手順で進めます：
 5. `/sync-status append-event task-xxx '{"action":"task_created","actor":"commander","severity":"null","detail":"タスク作成完了"}'` でEVENTLOGに記録
 6. Observer の Gate1 評価を待つ（`runtime/BOARD.md` の `observer_check_triggers: spec_created` で自動検知）
 
+**Human Control モード時の出力:**
+```markdown
+---
+✅ **タスク分解完了**
+
+[分解されたタスク数] 個のタスクに分解し、spec.md を作成しました。
+
+📋 **次のステップ (Human Control)**:
+1. 別のターミナルで `tmux attach-session -t observer` を実行
+2. Observerに以下を依頼: "task-xxx の Gate1 評価を実施してください"
+3. 評価結果を確認後、このセッションに戻る
+
+📂 **確認すべきファイル**:
+- `tasks/task-xxx/spec.md`: タスク仕様
+- `runtime/BOARD.md`: タスク登録状況
+- `runtime/EVENTLOG.json`: イベント記録
+---
+```
+
 ---
 
 ## Worker への着手許可の手順
@@ -67,6 +86,24 @@ depends_on タスクが fail した場合は以下を判断する：
 - 部分着手可能：`spec.md` を修正して着手許可（`commander_judgment` に根拠を記載）
 - 判断できない：ユーザーへ上告
 
+**Human Control モード時の出力:**
+```markdown
+---
+✅ **Worker 着手許可完了**
+
+task-xxx の着手許可を出しました。
+
+📋 **次のステップ (Human Control)**:
+1. 別のターミナルで `tmux attach-session -t worker-1` を実行（またはworker-2など）
+2. Workerに以下を依頼: "task-xxx の spec.md に従って実装してください"
+3. Worker が result.md を作成したら、このセッションに戻る
+
+📂 **確認すべきファイル**:
+- `tasks/task-xxx/spec.md`: Worker への指示内容
+- `runtime/BOARD.md`: タスクステータス（in_progress になっている）
+---
+```
+
 ---
 
 ## 一次評価の手順（Gate2 前）
@@ -78,6 +115,25 @@ Worker が `result.md` を書いたら：
 3. `commander_review.md` を作成する（`templates/task/commander_review.md` を参照）
 4. `runtime/EVENTLOG.json` に該当イベントを追記する
 5. Observer の Gate2 評価を待つ（`observer_check_triggers: commander_review_created` で自動検知）
+
+**Human Control モード時の出力:**
+```markdown
+---
+✅ **一次評価完了**
+
+task-xxx の一次評価を完了し、commander_review.md を作成しました。
+
+📋 **次のステップ (Human Control)**:
+1. 別のターミナルで `tmux attach-session -t observer` を実行
+2. Observerに以下を依頼: "task-xxx の Gate2 評価を実施してください"
+3. 評価結果を確認後、このセッションに戻る
+
+📂 **確認すべきファイル**:
+- `tasks/task-xxx/commander_review.md`: 一次評価結果
+- `tasks/task-xxx/result.md`: Worker の成果物
+- `runtime/BOARD.md`: タスクステータス
+---
+```
 
 ---
 
@@ -92,6 +148,43 @@ Observer が `runtime/DISCUSSION.md` に fail を起票したら：
    - 受け入れ：`spec.md` を修正 or Worker に再指示 → フロー再開
    - 反論：`runtime/DISCUSSION.md` に根拠を記載して議論継続
 5. `discussion_round_limit` に達した場合は上告義務が発生する
+
+**Human Control モード時の出力（受け入れの場合）:**
+```markdown
+---
+✅ **Observer 指摘への対応完了**
+
+Observer の指摘を受け入れ、修正しました。
+
+📋 **次のステップ (Human Control)**:
+1. 別のターミナルで `tmux attach-session -t observer` を実行
+2. Observerに以下を依頼: "task-xxx の再評価を実施してください"
+3. 再評価結果を確認後、このセッションに戻る
+
+📂 **確認すべきファイル**:
+- `runtime/DISCUSSION.md`: 議論内容と対応状況
+- `tasks/task-xxx/spec.md` (修正した場合): 修正内容
+- `runtime/EVENTLOG.json`: イベント記録
+---
+```
+
+**Human Control モード時の出力（反論の場合）:**
+```markdown
+---
+⚠️ **Observer との議論継続**
+
+Observer の指摘に対して反論を記載しました。
+
+📋 **次のステップ (Human Control)**:
+1. 別のターミナルで `tmux attach-session -t observer` を実行
+2. Observerに以下を依頼: "DISCUSSION.md の Commander 応答を確認し、再評価してください"
+3. Observer の応答を確認後、このセッションに戻る
+
+📂 **確認すべきファイル**:
+- `runtime/DISCUSSION.md`: 反論内容
+- `runtime/BOARD.md`: discussion_round_limit の残数
+---
+```
 
 ---
 

@@ -3,6 +3,8 @@ task_id: task-xxx
 worker_type: coding
 depends_on: []
 parallel_ok: false
+input_artifacts: []
+output_artifacts: []
 permissions:
   filesystem:
     write: []
