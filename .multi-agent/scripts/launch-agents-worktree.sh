@@ -4,8 +4,8 @@
 
 set -e
 
-# プロジェクトディレクトリを自動取得（このスクリプトの親ディレクトリ）
-PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+# プロジェクトディレクトリを自動取得（このスクリプトから2階層上）
+PROJECT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$PROJECT_DIR"
 
 echo "==================================="
@@ -67,7 +67,7 @@ if [ ! -f "runtime/EVENTLOG.json" ]; then
 fi
 
 if [ ! -f "runtime/CONTEXT.md" ]; then
-    cp templates/session/CONTEXT.md runtime/CONTEXT.md 2>/dev/null || \
+    cp .multi-agent/templates/session/CONTEXT.md runtime/CONTEXT.md 2>/dev/null || \
     cat > runtime/CONTEXT.md << 'EOF'
 ---
 session_id: session-001
