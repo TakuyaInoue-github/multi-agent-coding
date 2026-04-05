@@ -80,17 +80,61 @@ task-xxx の Gate1 評価で問題を検出しました。
 ## Gate2 評価の手順
 
 1. `runtime/CONTEXT.md` を読む
+   - **重要**: `技術スタック` セクションからプロジェクトの言語を確認する
 2. `tasks/task-xxx/spec.md` を読む
 3. `tasks/task-xxx/result.md` を読む
 4. `tasks/task-xxx/commander_review.md` を読む
-5. `.multi-agent/.multi-agent/config/RULEBOOK.md` の Gate2 チェックリストに従って評価する
-6. output_artifacts が実際に存在するか確認する
-7. `tasks/task-xxx/observer_review.md` を作成する
-8. `runtime/EVENTLOG.json` に追記する
-9. verdict に応じて以下を実行する：
-   - pass → 何もしない（Commander が develop へマージ）
-   - warning → `runtime/EVENTLOG.json` に記録するのみ
-   - fail → `runtime/DISCUSSION.md` に起票する
+5. `.multi-agent/config/RULEBOOK.md` の Gate2 チェックリストに従って評価する
+6. **言語固有の品質チェックを実行する**（下記参照）
+7. output_artifacts が実際に存在するか確認する
+8. `tasks/task-xxx/observer_review.md` を作成する
+9. `runtime/EVENTLOG.json` に追記する
+10. verdict に応じて以下を実行する：
+    - pass → 何もしない（Commander が develop へマージ）
+    - warning → `runtime/EVENTLOG.json` に記録するのみ
+    - fail → `runtime/DISCUSSION.md` に起票する
+
+### 言語固有の品質チェック（Gate2）
+
+`CONTEXT.md` の `技術スタック.language` に基づき、適切な品質チェック Skill を使用する：
+
+- **Python**: `/python-quality-check "task-xxx"`
+  - チェック内容: black, flake8, mypy, pytest
+  - カバレッジ目標: 80%
+
+- **TypeScript**: `/typescript-quality-check "task-xxx"`
+  - チェック内容: tsc, prettier, eslint, vitest/jest
+  - カバレッジ目標: 80%
+
+- **Go**: `/go-quality-check "task-xxx"`
+  - チェック内容: gofmt, go vet, golangci-lint, go test
+  - カバレッジ目標: 80%
+
+- **Java**: `/java-quality-check "task-xxx"`
+  - チェック内容: compile, checkstyle, spotbugs, junit
+  - カバレッジ目標: 80%
+
+品質チェック Skill は `tasks/task-xxx/quality_report.md` を生成します。
+`observer_review.md` の評価には以下を含めること：
+
+```markdown
+## 言語固有チェック ({{language}})
+
+品質チェックレポート: `tasks/task-xxx/quality_report.md`
+
+**チェック結果**:
+- フォーマット: pass | fail
+- リンター: pass | warning | fail
+- 型チェック: pass | fail (TypeScript/Python の場合)
+- 静的解析: pass | fail (Go/Java の場合)
+- テスト: pass | warning | fail | not_applicable
+- カバレッジ: XX% (目標: 80%)
+
+**総合評価**: pass | warning | fail
+```
+
+品質チェックで fail が出た場合、`observer_review.md` の verdict は fail とし、
+修正方法を `improvement_suggestions` に記載すること。
 
 **Human Control モード時の出力（PASS の場合）:**
 ```markdown
