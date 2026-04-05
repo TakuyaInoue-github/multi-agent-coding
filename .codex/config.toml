@@ -1,0 +1,49 @@
+# Codex Plugin Configuration
+# Worker エージェントが使用する Codex の設定
+
+# === モデル設定 ===
+
+# 使用する Codex モデル
+# 推奨: gpt-4o (バランス), gpt-4o-mini (コスト重視), o1-mini (複雑なロジック)
+model = "gpt-4o"
+
+# 推論努力レベル（o1/o3 系モデルのみ有効）
+# オプション: "low", "medium", "high"
+# model_reasoning_effort = "medium"
+
+# === 実行設定 ===
+
+# バックグラウンド実行をデフォルトに
+# Worker の長時間タスクに適している
+default_background = true
+
+# タイムアウト設定（秒）
+# BOARD.md の worker_timeout_hours (1時間 = 3600秒) に合わせる
+timeout = 3600
+
+# === ログ設定 ===
+
+# ログレベル: "debug", "info", "warn", "error"
+log_level = "info"
+
+# === 認証設定 ===
+
+# API キーは環境変数 OPENAI_API_KEY で設定することを推奨
+# export OPENAI_API_KEY="sk-..."
+
+# ここに直接書くことも可能（非推奨、gitignore されているが注意）
+# api_key = "sk-..."
+
+# === Worker 固有の設定 ===
+
+# Git コミットメッセージのプレフィックス
+# Codex が生成したコミットに自動付与される
+# commit_prefix = "[codex]"
+
+# === デバッグ設定 ===
+
+# 詳細なログを出力（トラブルシューティング用）
+# verbose = false
+
+# Codex のプロンプトをログに記録
+# log_prompts = false

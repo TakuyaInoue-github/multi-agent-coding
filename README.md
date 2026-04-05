@@ -42,20 +42,39 @@ tmux attach-session -t worker-1    # Worker
 
 詳細は [docs/GUIDE.md](docs/GUIDE.md) を参照してください。
 
+### Codex Plugin のセットアップ（Worker のみ）
+
+Worker は実装タスクを **Codex に委譲**します。初回のみ以下のセットアップが必要です：
+
+```bash
+# Worker セッションで実行
+/plugin marketplace add openai/codex-plugin-cc
+/plugin install codex@openai-codex
+/reload-plugins
+/codex:setup
+```
+
+**必要な認証**:
+- ChatGPT Plus サブスクリプション、または
+- OpenAI API キー（`export OPENAI_API_KEY="sk-..."`）
+
+詳細は [docs/CODEX_SETUP.md](docs/CODEX_SETUP.md) を参照してください。
+
 ## ディレクトリ構造
 
 ```
 multi-agent/
 ├── .claude/skills/  # Claude Code Skills（タスク分解・評価等）
+├── .codex/          # Codex Plugin 設定
 ├── agents/          # エージェント定義（システムプロンプト）
 ├── config/          # 設定・ルール
 ├── templates/       # テンプレート
 ├── runtime/         # ランタイム状態（セッション中に更新）
 ├── tasks/           # タスク実行結果
 ├── docs/            # ドキュメント
+├── scripts/         # 起動スクリプト
 ├── archive/         # アーカイブ
-├── improvement/     # 改善文書
-└── skills/          # Skills（Codex向け、将来追加予定）
+└── improvement/     # 改善文書
 ```
 
 ## 主要ファイル

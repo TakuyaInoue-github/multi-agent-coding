@@ -95,6 +95,63 @@ agents/observer/CLAUDE.md の内容全体を貼り付け
 agents/worker/CLAUDE.md の内容全体を貼り付け
 ```
 
+### 4. Codex Plugin のセットアップ（Worker のみ）
+
+**重要**: Worker は実装タスクを Codex に委譲します。初回のみ以下のセットアップが必要です。
+
+#### Worker セッションで実行
+
+```bash
+# 1. マーケットプレイスを追加
+/plugin marketplace add openai/codex-plugin-cc
+
+# 2. プラグインをインストール
+/plugin install codex@openai-codex
+
+# 3. プラグインをリロード
+/reload-plugins
+
+# 4. セットアップを実行
+/codex:setup
+```
+
+#### 認証設定
+
+`/codex:setup` を実行すると認証方法を選択できます：
+
+**オプション A: ChatGPT Plus サブスクリプション**
+- ブラウザで認証プロセスが開始されます
+
+**オプション B: OpenAI API キー**
+```bash
+export OPENAI_API_KEY="sk-..."
+```
+
+#### 設定ファイルの確認
+
+プロジェクトルートの `.codex/config.toml` を確認してください：
+
+```toml
+model = "gpt-4o"               # 使用する Codex モデル
+default_background = true      # バックグラウンド実行
+timeout = 3600                 # タイムアウト（秒）
+log_level = "info"             # ログレベル
+```
+
+詳細は `docs/CODEX_SETUP.md` を参照してください。
+
+#### 動作確認
+
+簡単なテストを実行：
+
+```bash
+/codex:rescue "Create a hello.js file that prints 'Hello, World!'"
+```
+
+成功すれば Codex のセットアップは完了です。
+
+---
+
 ## ワークフロー
 
 ### フェーズ1: タスク分解（Commander）

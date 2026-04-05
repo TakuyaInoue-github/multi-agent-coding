@@ -2,8 +2,33 @@
 
 あなたはこのプロジェクトの **Worker** です。
 与えられた `spec.md` の指示に従い、タスクを実行してください。
+
+**重要**: Worker は **Codex に実装を委譲**します。あなた（Claude Code）は：
+- spec.md を読んで理解する
+- `/codex:rescue` コマンドで Codex にタスクを渡す
+- Codex の実行結果を確認する
+- result.md を作成して報告する
+
 指示の範囲外のことは行わないでください。
 判断に迷った場合は実行を止めて `result.md` に `blocked_reason` を記載してください。
+
+---
+
+## 前提条件: Codex Plugin のセットアップ
+
+**初回のみ実行してください**:
+
+```bash
+# 1. プラグインをインストール
+/plugin marketplace add openai/codex-plugin-cc
+/plugin install codex@openai-codex
+/reload-plugins
+
+# 2. セットアップ
+/codex:setup
+```
+
+詳細は `docs/CODEX_SETUP.md` を参照してください。
 
 ---
 
@@ -14,7 +39,103 @@
 3. `required_packages` が環境に揃っているか確認する（揃っていない場合は blocked）
 4. `input_artifacts` が存在するか確認する（存在しない場合は blocked）
 5. `task/task-xxx` ブランチに切り替える（なければ作成する）
-6. 作業を開始する
+6. Codex にタスクを委譲する（次のセクション参照）
+
+---
+
+## Codex へのタスク委譲
+
+### 基本的な委譲フロー
+
+1. **spec.md の内容を整形**
+   ```
+   spec.md から以下を抽出：
+   - 指示内容
+   - 期待する成果物（output_artifacts）
+   - 注意事項
+   - permissions の制約
+   ```
+
+2. **Codex にタスクを委譲**
+   ```bash
+   /codex:rescue --background "
+   以下の仕様に従って実装してください。
+
+   ## タスク: [task_id]
+
+   ### 指示内容
+   [spec.md の「指示内容」セクションをそのまま貼り付け]
+
+   ### 期待する成果物
+   [output_artifacts のリスト]
+   - path/to/file1.js
+   - path/to/file2.css
+
+   ### 制約・注意事項
+   - ファイル書き込み許可: [permissions.filesystem.write]
+   - 実行許可コマンド: [permissions.execution.allowed]
+   - 必要パッケージ: [required_packages]
+
+   [spec.md の「注意事項」セクション]
+
+   ### 成功基準
+   [spec.md の成功基準チェックリスト]
+
+   実装完了後、以下を確認してください：
+   - すべての output_artifacts が生成されている
+   - permissions の制約を守っている
+   - 成功基準をすべて満たしている
+   "
+   ```
+
+3. **進捗を監視**
+   ```bash
+   # バックグラウンド実行の状態を確認
+   /codex:status
+   ```
+
+4. **完了を確認**
+   - Codex が生成したファイルを確認
+   - 成功基準を1つずつチェック
+   - 問題があれば `/codex:rescue --resume` で修正依頼
+
+### Codex コマンドのオプション
+
+#### タスク委譲
+```bash
+# バックグラウンド実行（推奨）
+/codex:rescue --background "タスク内容"
+
+# 完了まで待機（短時間タスク）
+/codex:rescue --wait "タスク内容"
+
+# モデル指定
+/codex:rescue --model gpt-4o-mini "簡単なタスク"
+
+# 前回の続き
+/codex:rescue --resume "前回の修正を適用"
+```
+
+#### 進捗確認
+```bash
+/codex:status
+```
+
+#### タスクキャンセル
+```bash
+/codex:cancel
+```
+
+### モデル選択のガイドライン
+
+| タスクの複雑度 | 推奨モデル | 理由 |
+|--------------|-----------|------|
+| 簡単な実装 | `gpt-4o-mini` | コスト効率が良い |
+| 標準的な実装 | `gpt-4o` | バランスが良い |
+| 複雑なロジック | `o1-mini` | 推論能力が高い |
+| アルゴリズム | `o3-mini` | 最高性能 |
+
+spec.md に記載がない場合はデフォルト（`.codex/config.toml` の設定）を使用。
 
 ---
 
@@ -50,13 +171,38 @@ wip: task-xxx （進捗概要）
 
 ## タスク完了時の手順
 
-1. 最終コミットを行う：
+1. **Codex の実行結果を確認**
+   ```bash
+   # 進捗状態を確認
+   /codex:status
+
+   # 生成されたファイルを確認
+   ls [output_artifacts のパス]
+
+   # 成功基準をチェック
+   [spec.md の成功基準を1つずつ確認]
    ```
-   feat/fix/test: task-xxx （作業概要）
+
+2. **Git コミットを確認**
+   ```bash
+   # Codex が自動的にコミットしている場合が多い
+   git log -1
+
+   # コミットメッセージが不適切な場合は修正
+   git commit --amend -m "feat: task-xxx （作業概要）"
    ```
-2. `result.md` を最終報告として更新する（`status: completed`）
-3. `templates/task/result.md` の全セクションを埋める
-4. Commander に完了を報告する
+
+   Codex がコミットしていない場合は手動でコミット：
+   ```bash
+   git add [変更ファイル]
+   git commit -m "feat: task-xxx （作業概要）"
+   ```
+
+3. **result.md を作成**
+   `result.md` を最終報告として作成する（`status: completed`）
+   `templates/task/result.md` の全セクションを埋める
+
+4. **Commander に完了を報告**
 
 **Human Control モード時の出力:**
 ```markdown
@@ -81,14 +227,30 @@ task-xxx の実装が完了しました。
 
 ## タスク失敗時の手順
 
-1. 失敗のコミットを行う：
+1. **Codex のエラーを確認**
+   ```bash
+   # エラー内容を確認
+   /codex:status
+
+   # 必要に応じて修正を試みる
+   /codex:rescue --resume "エラーを修正してください: [エラー内容]"
    ```
-   wip: task-xxx [FAILED] （理由）
+
+2. **修正不可能な場合は失敗として報告**
+
+   失敗のコミットを行う（Codex がコミットしていない場合）：
+   ```bash
+   git add .
+   git commit -m "wip: task-xxx [FAILED] （理由）"
    ```
-2. `result.md` を更新する（`status: failed`）
-3. `未達・問題` セクションに失敗理由を詳細に記載する
-4. `申し送り` セクションに次の attempt への情報を記載する
-5. Commander に失敗を報告する
+
+3. **result.md を作成**
+   - `status: failed`
+   - `未達・問題` セクションに失敗理由を詳細に記載
+   - Codex のエラーメッセージを含める
+   - `申し送り` セクションに次の attempt への情報を記載
+
+4. **Commander に失敗を報告**
 
 **Human Control モード時の出力:**
 ```markdown
@@ -119,8 +281,21 @@ task-xxx の実装に失敗しました。
 - `input_artifacts` が存在しない
 - `permissions` の範囲外の操作が必要になった
 - 仕様が不明確で判断できない
+- Codex が繰り返しエラーを出す（3回以上）
 
-`result.md` の `未達・問題` セクションに `blocked_reason` を明記する。
+**手順**:
+
+1. **実行中の Codex タスクをキャンセル**
+   ```bash
+   /codex:cancel
+   ```
+
+2. **result.md を作成**
+   - `status: blocked`
+   - `未達・問題` セクションに `blocked_reason` を明記
+   - Codex を実行した場合はそのログも含める
+
+3. **Commander にエスカレーション**
 
 **Human Control モード時の出力:**
 ```markdown

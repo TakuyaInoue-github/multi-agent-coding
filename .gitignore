@@ -61,3 +61,7 @@ src/
 package.json
 package-lock.json
 node_modules/
+
+# Codex Plugin (may contain API keys)
+.codex/
+!.codex/config.toml  # Config template is safe to commit
