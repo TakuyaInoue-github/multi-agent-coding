@@ -11,11 +11,84 @@
 必ず以下の順で読み込んでから作業を開始する：
 
 1. `runtime/CONTEXT.md` を読む（前セッションの判断基準・未解決事項）
+   - **重要**: `技術スタック` セクションからプロジェクトの言語・ツールを確認する
 2. `runtime/BOARD.md` を読む（タスク状態・依存グラフ・policy）
 3. `runtime/EVENTLOG.json` の末尾 20件を読む（直近の出来事）
 4. `runtime/SUMMARY.md` の未解決イベント一覧を確認する
 5. `runtime/BOARD.md` の `observer_request` を確認する
 6. suspended タスクがある場合は `result.md` を読んで `resume_action` を決定する
+
+---
+
+## 言語固有の考慮事項
+
+### プロジェクトセットアップ時
+
+`CONTEXT.md` の `技術スタック` セクションに基づき、適切なセットアップ Skill を使用する：
+
+- **Python**: `/python-setup "バージョン" "開発ツール"`
+  - 例: `/python-setup "3.11" "pytest,black,flake8,mypy"`
+- **TypeScript**: `/typescript-setup "パッケージマネージャー" "テストフレームワーク"`
+  - 例: `/typescript-setup "npm" "vitest"`
+- **Go**: `/go-setup "モジュールパス" "バージョン"`
+  - 例: `/go-setup "github.com/user/project" "1.21"`
+- **Java**: `/java-setup "ビルドツール" "グループID" "バージョン"`
+  - 例: `/java-setup "maven" "com.example.myapp" "17"`
+
+セットアップ Skill を使用すると、言語固有の以下が自動設定されます：
+- 環境管理（仮想環境、パッケージマネージャー）
+- コード品質ツール（フォーマッター、リンター）
+- テストフレームワーク
+- ビルド設定
+- `.gitignore`
+
+### タスク分解時の言語固有の注意
+
+タスク分解前に `.multi-agent/config/languages/{language}.md` を読み、以下を考慮する：
+
+**Python**:
+- 仮想環境の使用を明記
+- `requirements.txt` の更新を output_artifacts に含める
+- パッケージインストールは独立タスクとする
+
+**TypeScript**:
+- `package.json` と `package-lock.json` (or yarn.lock/pnpm-lock.yaml) を output_artifacts に含める
+- ビルドツール（Vite/webpack）の設定を考慮
+- 型定義パッケージ (`@types/*`) の必要性を確認
+
+**Go**:
+- `go.mod` と `go.sum` を output_artifacts に含める
+- `internal/` と `pkg/` の使い分けを考慮
+- エラーハンドリング（`if err != nil`）の重要性を明記
+
+**Java**:
+- ビルドツール（Maven/Gradle）の設定ファイル更新を output_artifacts に含める
+- パッケージ構造（逆ドメイン形式）を考慮
+- テストとモックライブラリ（JUnit 5 + Mockito）の使用を明記
+
+### required_packages の指定
+
+言語ごとに適切な形式でパッケージを指定する：
+
+```yaml
+# Python
+required_packages:
+  - requests>=2.31.0
+  - pytest>=7.4.0
+
+# TypeScript
+required_packages:
+  - express@^4.18.0
+  - @types/express@^4.17.0
+
+# Go
+required_packages:
+  - github.com/gorilla/mux@v1.8.0
+
+# Java (Maven)
+required_packages:
+  - org.springframework.boot:spring-boot-starter-web:3.1.0
+```
 
 ---
 
