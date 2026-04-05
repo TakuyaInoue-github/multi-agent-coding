@@ -58,31 +58,41 @@ Worker は実装タスクを **Codex に委譲**します。初回のみ以下�
 - ChatGPT Plus サブスクリプション、または
 - OpenAI API キー（`export OPENAI_API_KEY="sk-..."`）
 
-詳細は [docs/CODEX_SETUP.md](docs/CODEX_SETUP.md) を参照してください。
+詳細は [.multi-agent/docs/CODEX_SETUP.md](.multi-agent/docs/CODEX_SETUP.md) を参照してください。
 
 ## ディレクトリ構造
 
 ```
-multi-agent/
-├── .claude/skills/  # Claude Code Skills（タスク分解・評価等）
-├── .codex/          # Codex Plugin 設定
-├── agents/          # エージェント定義（システムプロンプト）
-├── config/          # 設定・ルール
-├── templates/       # テンプレート
-├── runtime/         # ランタイム状態（セッション中に更新）
-├── tasks/           # タスク実行結果
-├── docs/            # ドキュメント
-├── scripts/         # 起動スクリプト
-├── archive/         # アーカイブ
-└── improvement/     # 改善文書
+my-project/              # ユーザーのプロジェクト
+├── .claude/             # Claude Code標準
+│   ├── skills/          # タスク分解・評価等のSkills
+│   └── agents/          # Subagent（Claude Code標準機能）
+├── .codex/              # Codex Plugin設定
+├── .multi-agent/        # Multi-Agentフレームワーク
+│   ├── roles/           # エージェント定義（システムプロンプト）
+│   │   ├── commander/
+│   │   ├── observer/
+│   │   └── worker/
+│   ├── config/          # 設定・ルール
+│   ├── templates/       # テンプレート
+│   ├── docs/            # ドキュメント
+│   └── scripts/         # 起動スクリプト
+├── runtime/             # セッション状態（実行時生成）
+├── tasks/               # タスク結果（実行時生成）
+└── [プロジェクトファイル]
 ```
+
+**ポイント**:
+- `.multi-agent/` - フレームワークファイル（ドット付きで非表示）
+- `runtime/`, `tasks/` - 実行時に生成（`.gitignore`で除外）
+- `.claude/agents/` - Claude Code標準のSubagent（我々の`roles/`とは別）
 
 ## 主要ファイル
 
 ### エージェント定義
-- `agents/commander/CLAUDE.md` - Commander用プロンプト
-- `agents/observer/CLAUDE.md` - Observer用プロンプト
-- `agents/worker/CLAUDE.md` - Worker用プロンプト
+- `.multi-agent/roles/commander/CLAUDE.md` - Commander用プロンプト
+- `.multi-agent/roles/observer/CLAUDE.md` - Observer用プロンプト
+- `.multi-agent/roles/worker/CLAUDE.md` - Worker用プロンプト
 
 ### ランタイム状態
 - `runtime/BOARD.md` - タスク状態管理
@@ -92,7 +102,7 @@ multi-agent/
 - `runtime/EVENTLOG.json` - イベント記録
 
 ### 設定
-- `config/RULEBOOK.md` - Observer評価基準
+- `.multi-agent/config/RULEBOOK.md` - Observer評価基準
 
 ### Claude Code Skills
 - `.claude/skills/task-decomposition/` - タスク分解Skill（Commander用）

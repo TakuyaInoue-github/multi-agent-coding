@@ -40,21 +40,21 @@ Commander (セッション1)  →  マージ
 cd /path/to/multi-agent
 tmux new-session -s commander
 # セッション内で:
-cat agents/commander/CLAUDE.md  # プロンプトを確認
+cat .multi-agent/roles/commander/CLAUDE.md  # プロンプトを確認
 claude
 
 # ターミナル2: Observer
 cd /path/to/multi-agent
 tmux new-session -s observer
 # セッション内で:
-cat agents/observer/CLAUDE.md  # プロンプトを確認
+cat .multi-agent/roles/observer/CLAUDE.md  # プロンプトを確認
 claude
 
 # ターミナル3: Worker-1
 cd /path/to/multi-agent
 tmux new-session -s worker-1
 # セッション内で:
-cat agents/worker/CLAUDE.md  # プロンプトを確認
+cat .multi-agent/roles/worker/CLAUDE.md  # プロンプトを確認
 claude
 ```
 
@@ -82,17 +82,17 @@ tmux attach-session -t worker-1
 
 **Commander セッション:**
 ```
-agents/commander/CLAUDE.md の内容全体を貼り付け
+.multi-agent/roles/commander/CLAUDE.md の内容全体を貼り付け
 ```
 
 **Observer セッション:**
 ```
-agents/observer/CLAUDE.md の内容全体を貼り付け
+.multi-agent/roles/observer/CLAUDE.md の内容全体を貼り付け
 ```
 
 **Worker セッション:**
 ```
-agents/worker/CLAUDE.md の内容全体を貼り付け
+.multi-agent/roles/worker/CLAUDE.md の内容全体を貼り付け
 ```
 
 ### 4. Codex Plugin のセットアップ（Worker のみ）
@@ -138,7 +138,7 @@ timeout = 3600                 # タイムアウト（秒）
 log_level = "info"             # ログレベル
 ```
 
-詳細は `docs/CODEX_SETUP.md` を参照してください。
+詳細は `.multi-agent/docs/CODEX_SETUP.md` を参照してください。
 
 #### 動作確認
 
@@ -514,4 +514,4 @@ git commit -m "checkpoint: before major task"
 2. Commanderで最初のタスクを分解
 3. ワークフローに従って実行
 
-詳細は [docs/GUIDE.md](GUIDE.md) を参照してください。
+詳細は [.multi-agent/docs/GUIDE.md](GUIDE.md) を参照してください。

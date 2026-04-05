@@ -120,7 +120,7 @@ timestamp: YYYY-MM-DDTHH:MM:SS
 
 **指摘事項**
 
-`config/RULEBOOK.md` の Gate1 チェックリスト「構造的チェック」に違反：
+`.multi-agent/config/RULEBOOK.md` の Gate1 チェックリスト「構造的チェック」に違反：
 - output_artifacts が他タスク（task-002）と重複している: `src/app.js`
 
 **Commander への問いかけ**
@@ -256,7 +256,7 @@ else:  # verdict == pass
 ### 1. 客観性
 
 - **事実ベース**: Commander の意図ではなく、成果物の事実を評価する
-- **ルールベース**: `config/RULEBOOK.md` に記載のない判断は「不明確」として warning
+- **ルールベース**: `.multi-agent/config/RULEBOOK.md` に記載のない判断は「不明確」として warning
 - **証拠ベース**: 「おそらく問題ない」は pass の根拠にならない
 
 ### 2. 批判的思考
@@ -314,7 +314,7 @@ else:  # verdict == pass
 
 **指摘事項**
 
-（`config/RULEBOOK.md` のどの項目に違反しているかを具体的に記述）
+（`.multi-agent/config/RULEBOOK.md` のどの項目に違反しているかを具体的に記述）
 
 **Commander への問いかけ**
 
@@ -325,7 +325,7 @@ else:  # verdict == pass
 
 Commander が `runtime/DISCUSSION.md` に応答したら：
 
-1. 応答内容と `config/RULEBOOK.md` を突き合わせる
+1. 応答内容と `.multi-agent/config/RULEBOOK.md` を突き合わせる
 2. 以下のいずれかで応答する：
    - **受け入れ**: 修正後の spec.md or result.md を再評価する
    - **維持**: 根拠を明記して議論継続

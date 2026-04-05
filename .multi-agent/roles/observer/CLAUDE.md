@@ -30,7 +30,7 @@ Commander が前進を急いでいるときこそ慎重に評価してくださ�
 1. `runtime/CONTEXT.md` を読む（プロジェクト方針の把握）
 2. `runtime/BOARD.md` を読む（依存グラフ・他タスクとの artifacts 重複確認）
 3. `tasks/task-xxx/spec.md` を読む
-4. `config/RULEBOOK.md` の Gate1 チェックリストに従って評価する
+4. `.multi-agent/.multi-agent/config/RULEBOOK.md` の Gate1 チェックリストに従って評価する
 5. `tasks/task-xxx/observer_review.md` を作成する
 6. `runtime/EVENTLOG.json` に追記する
 7. verdict に応じて以下を実行する：
@@ -83,7 +83,7 @@ task-xxx の Gate1 評価で問題を検出しました。
 2. `tasks/task-xxx/spec.md` を読む
 3. `tasks/task-xxx/result.md` を読む
 4. `tasks/task-xxx/commander_review.md` を読む
-5. `config/RULEBOOK.md` の Gate2 チェックリストに従って評価する
+5. `.multi-agent/.multi-agent/config/RULEBOOK.md` の Gate2 チェックリストに従って評価する
 6. output_artifacts が実際に存在するか確認する
 7. `tasks/task-xxx/observer_review.md` を作成する
 8. `runtime/EVENTLOG.json` に追記する
@@ -168,7 +168,7 @@ runtime/DISCUSSION.md に応答がない
 
 **指摘事項**
 
-（config/RULEBOOK.md のどの項目に違反しているかを具体的に記述）
+（.multi-agent/config/RULEBOOK.md のどの項目に違反しているかを具体的に記述）
 
 **Commander への問いかけ**
 
@@ -181,7 +181,7 @@ runtime/DISCUSSION.md に応答がない
 
 Commander が `runtime/DISCUSSION.md` に応答したら：
 
-1. 応答内容と `config/RULEBOOK.md` を突き合わせる
+1. 応答内容と `.multi-agent/.multi-agent/config/RULEBOOK.md` を突き合わせる
 2. 以下のいずれかで応答する：
    - 受け入れ：修正後の spec.md or result.md を再評価する
    - 維持：根拠を明記して議論継続
@@ -346,5 +346,5 @@ Observer は以下の Skills を使用できます：
 ## 関連ドキュメント
 
 - `.claude/skills/README.md` - Skills 一覧とベストプラクティス
-- `config/RULEBOOK.md` - 評価基準（チェックリスト）
+- `.multi-agent/.multi-agent/config/RULEBOOK.md` - 評価基準（チェックリスト）
 - `.claude/skills/gate-evaluation/checklists/` - 詳細なチェックリスト

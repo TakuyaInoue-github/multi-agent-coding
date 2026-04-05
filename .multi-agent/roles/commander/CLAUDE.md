@@ -112,7 +112,7 @@ Worker が `result.md` を書いたら：
 
 1. `spec.md` の指示内容と `result.md` を突き合わせる
 2. `output_artifacts` が実際に存在するか確認する
-3. `commander_review.md` を作成する（`templates/task/commander_review.md` を参照）
+3. `commander_review.md` を作成する（`.multi-agent/templates/task/commander_review.md` を参照）
 4. `runtime/EVENTLOG.json` に該当イベントを追記する
 5. Observer の Gate2 評価を待つ（`observer_check_triggers: commander_review_created` で自動検知）
 
@@ -142,7 +142,7 @@ task-xxx の一次評価を完了し、commander_review.md を作成しました
 Observer が `runtime/DISCUSSION.md` に fail を起票したら：
 
 1. `runtime/DISCUSSION.md` を読んで Observer の指摘を把握する
-2. `config/RULEBOOK.md` を参照して指摘の妥当性を確認する
+2. `.multi-agent/.multi-agent/config/RULEBOOK.md` を参照して指摘の妥当性を確認する
 3. `runtime/BOARD.md` の `policy.discussion_round_limit` を確認する
 4. 以下のいずれかで応答する：
    - 受け入れ：`spec.md` を修正 or Worker に再指示 → フロー再開
@@ -311,5 +311,5 @@ runtime/ ファイルを更新し、監査証跡を作成します。
 ## 関連ドキュメント
 
 - `.claude/skills/README.md` - Skills 一覧とベストプラクティス
-- `config/RULEBOOK.md` - 評価基準
-- `templates/task/` - タスクテンプレート
+- `.multi-agent/.multi-agent/config/RULEBOOK.md` - 評価基準
+- `.multi-agent/templates/task/` - タスクテンプレート

@@ -13,24 +13,24 @@
 
 | 旧パス | 新パス |
 |-------|-------|
-| `CLAUDE_COMMANDER.md` | `agents/commander/CLAUDE.md` |
-| `CLAUDE_OBSERVER.md` | `agents/observer/CLAUDE.md` |
-| `CLAUDE_WORKER.md` | `agents/worker/CLAUDE.md` |
+| `CLAUDE_COMMANDER.md` | `.multi-agent/roles/commander/CLAUDE.md` |
+| `CLAUDE_OBSERVER.md` | `.multi-agent/roles/observer/CLAUDE.md` |
+| `CLAUDE_WORKER.md` | `.multi-agent/roles/worker/CLAUDE.md` |
 
 ### 設定・ルールファイル
 
 | 旧パス | 新パス |
 |-------|-------|
-| `RULEBOOK.md` | `config/RULEBOOK.md` |
+| `RULEBOOK.md` | `.multi-agent/.multi-agent/config/RULEBOOK.md` |
 
 ### テンプレートファイル
 
 | 旧パス | 新パス |
 |-------|-------|
-| `tasks/spec_template.md` | `templates/task/spec.md` |
-| `tasks/result_template.md` | `templates/task/result.md` |
-| `tasks/commander_review_template.md` | `templates/task/commander_review.md` |
-| `tasks/observer_review_template.md` | `templates/task/observer_review.md` |
+| `tasks/spec_template.md` | `.multi-agent/templates/task/spec.md` |
+| `tasks/result_template.md` | `.multi-agent/templates/task/result.md` |
+| `tasks/commander_review_template.md` | `.multi-agent/templates/task/commander_review.md` |
+| `tasks/observer_review_template.md` | `.multi-agent/templates/task/observer_review.md` |
 
 ### ランタイム状態ファイル
 
@@ -46,7 +46,7 @@
 
 | 旧パス | 新パス |
 |-------|-------|
-| `README.md`（詳細版） | `docs/GUIDE.md` |
+| `README.md`（詳細版） | `.multi-agent/docs/GUIDE.md` |
 | `README.md`（新規作成） | `README.md`（シンプル版） |
 
 ## 新しいディレクトリ構造
@@ -105,11 +105,11 @@ multi-agent/
 - `DISCUSSION.md` → `runtime/DISCUSSION.md`
 - `SUMMARY.md` → `runtime/SUMMARY.md`
 - `EVENTLOG.json` → `runtime/EVENTLOG.json`
-- `RULEBOOK.md` → `config/RULEBOOK.md`
-- `tasks/spec_template.md` → `templates/task/spec.md`
-- `tasks/result_template.md` → `templates/task/result.md`
-- `tasks/commander_review_template.md` → `templates/task/commander_review.md`
-- `tasks/observer_review_template.md` → `templates/task/observer_review.md`
+- `RULEBOOK.md` → `.multi-agent/.multi-agent/config/RULEBOOK.md`
+- `tasks/spec_template.md` → `.multi-agent/templates/task/spec.md`
+- `tasks/result_template.md` → `.multi-agent/templates/task/result.md`
+- `tasks/commander_review_template.md` → `.multi-agent/templates/task/commander_review.md`
+- `tasks/observer_review_template.md` → `.multi-agent/templates/task/observer_review.md`
 
 ## .gitignore の追加
 
@@ -128,12 +128,12 @@ multi-agent/
 ### 新規セッション開始時
 
 1. `runtime/BOARD.md` を確認
-2. `agents/commander/CLAUDE.md` をシステムプロンプトとして使用
-3. 必要に応じて `agents/observer/CLAUDE.md` も別セッションで起動
+2. `.multi-agent/roles/commander/CLAUDE.md` をシステムプロンプトとして使用
+3. 必要に応じて `.multi-agent/roles/observer/CLAUDE.md` も別セッションで起動
 
 ### タスク作成時
 
-1. `templates/task/spec.md` をコピーして `tasks/task-xxx/spec.md` を作成
+1. `.multi-agent/templates/task/spec.md` をコピーして `tasks/task-xxx/spec.md` を作成
 2. 他のテンプレートも同様に使用
 
 ## メリット
@@ -166,7 +166,7 @@ A: すべての CLAUDE.md ファイルは更新済みです。最新版を使用
 
 ### Q: テンプレートが見つからない
 
-A: `tasks/` ディレクトリではなく `templates/task/` ディレクトリを参照してください。
+A: `tasks/` ディレクトリではなく `.multi-agent/templates/task/` ディレクトリを参照してください。
 
 ## 関連ドキュメント
 

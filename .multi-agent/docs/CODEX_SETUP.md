@@ -294,4 +294,4 @@ Worker は spec.md の `permissions` を厳守する必要があります：
 3. ✅ Worker セッションでテスト実行
 4. → Worker CLAUDE.md を確認して実際のタスクを実行
 
-Worker CLAUDE.md の詳細は `agents/worker/CLAUDE.md` を参照してください。
+Worker CLAUDE.md の詳細は `.multi-agent/roles/worker/CLAUDE.md` を参照してください。

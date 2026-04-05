@@ -39,8 +39,8 @@ echo ""
 echo "[1/4] Starting Commander..."
 tmux new-session -d -s commander -c "$PROJECT_DIR" \
     "echo 'Commander Session'; \
-     echo 'Loading agents/commander/CLAUDE.md...'; \
-     cat agents/commander/CLAUDE.md; \
+     echo 'Loading .multi-agent/roles/commander/CLAUDE.md...'; \
+     cat .multi-agent/roles/commander/CLAUDE.md; \
      echo ''; \
      echo 'Commander is ready. Press Enter to start Claude Code.'; \
      read; \
@@ -50,8 +50,8 @@ tmux new-session -d -s commander -c "$PROJECT_DIR" \
 echo "[2/4] Starting Observer..."
 tmux new-session -d -s observer -c "$PROJECT_DIR" \
     "echo 'Observer Session'; \
-     echo 'Loading agents/observer/CLAUDE.md...'; \
-     cat agents/observer/CLAUDE.md; \
+     echo 'Loading .multi-agent/roles/observer/CLAUDE.md...'; \
+     cat .multi-agent/roles/observer/CLAUDE.md; \
      echo ''; \
      echo 'Observer is ready. Press Enter to start Claude Code.'; \
      read; \
@@ -61,8 +61,8 @@ tmux new-session -d -s observer -c "$PROJECT_DIR" \
 echo "[3/4] Starting Worker-1..."
 tmux new-session -d -s worker-1 -c "$PROJECT_DIR" \
     "echo 'Worker-1 Session'; \
-     echo 'Loading agents/worker/CLAUDE.md...'; \
-     cat agents/worker/CLAUDE.md; \
+     echo 'Loading .multi-agent/roles/worker/CLAUDE.md...'; \
+     cat .multi-agent/roles/worker/CLAUDE.md; \
      echo ''; \
      echo 'Worker-1 is ready. Press Enter to start Claude Code.'; \
      read; \
@@ -72,8 +72,8 @@ tmux new-session -d -s worker-1 -c "$PROJECT_DIR" \
 echo "[4/4] Starting Worker-2..."
 tmux new-session -d -s worker-2 -c "$PROJECT_DIR" \
     "echo 'Worker-2 Session'; \
-     echo 'Loading agents/worker/CLAUDE.md...'; \
-     cat agents/worker/CLAUDE.md; \
+     echo 'Loading .multi-agent/roles/worker/CLAUDE.md...'; \
+     cat .multi-agent/roles/worker/CLAUDE.md; \
      echo ''; \
      echo 'Worker-2 is ready. Press Enter to start Claude Code.'; \
      read; \
@@ -103,6 +103,6 @@ echo ""
 echo "Next steps:"
 echo "  1. Attach to Commander: tmux attach-session -t commander"
 echo "  2. Press Enter to start Claude Code"
-echo "  3. Paste the contents of agents/commander/CLAUDE.md as the first message"
+echo "  3. Paste the contents of .multi-agent/roles/commander/CLAUDE.md as the first message"
 echo "  4. Begin your task decomposition"
 echo ""

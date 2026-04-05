@@ -28,7 +28,7 @@
 /codex:setup
 ```
 
-詳細は `docs/CODEX_SETUP.md` を参照してください。
+詳細は `.multi-agent/docs/CODEX_SETUP.md` を参照してください。
 
 ---
 
@@ -200,7 +200,7 @@ wip: task-xxx （進捗概要）
 
 3. **result.md を作成**
    `result.md` を最終報告として作成する（`status: completed`）
-   `templates/task/result.md` の全セクションを埋める
+   `.multi-agent/templates/task/result.md` の全セクションを埋める
 
 4. **Commander に完了を報告**
 

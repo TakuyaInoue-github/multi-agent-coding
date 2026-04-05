@@ -149,7 +149,7 @@ tmux new-session -d -s commander -c "$PROJECT_DIR" \
     "echo 'Commander Session (Main Branch)'; \
      echo ''; \
      echo 'System Prompt:'; \
-     cat agents/commander/CLAUDE.md; \
+     cat .multi-agent/roles/commander/CLAUDE.md; \
      echo ''; \
      echo '---'; \
      echo 'Ready to start. Commands:'; \
@@ -165,7 +165,7 @@ tmux new-session -d -s observer -c "$PROJECT_DIR" \
     "echo 'Observer Session (Worktree)'; \
      echo ''; \
      echo 'System Prompt:'; \
-     cat agents/observer/CLAUDE.md; \
+     cat .multi-agent/roles/observer/CLAUDE.md; \
      echo ''; \
      echo '---'; \
      echo 'Ready to start. Commands:'; \
@@ -181,7 +181,7 @@ tmux new-session -d -s worker-1 -c "$PROJECT_DIR" \
     "echo 'Worker-1 Session (Worktree)'; \
      echo ''; \
      echo 'System Prompt:'; \
-     cat agents/worker/CLAUDE.md; \
+     cat .multi-agent/roles/worker/CLAUDE.md; \
      echo ''; \
      echo '---'; \
      echo 'Ready to start. Wait for spec.md from Commander.'; \

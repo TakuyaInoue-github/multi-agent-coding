@@ -291,8 +291,8 @@ Commander⇔Observer間のディスカッションで、ユーザーが手動で
 ```
 
 **実装箇所**:
-- `agents/commander/CLAUDE.md` のワークフロー終了時
-- `agents/observer/CLAUDE.md` のワークフロー終了時
+- `.multi-agent/roles/commander/CLAUDE.md` のワークフロー終了時
+- `.multi-agent/roles/observer/CLAUDE.md` のワークフロー終了時
 - DISCUSSION.md記録時に自動ガイダンス挿入
 
 ---
@@ -410,7 +410,7 @@ input_artifacts: []   # 依存する入力ファイルのパスリスト
    - Codexラッパースクリプト作成（`scripts/codex-worker.sh`）
    - launch-agents.shでworkerセッションにCodexを起動
    - エラーハンドリングとリトライ機構の実装
-2. **文書更新**: `docs/MULTI_SESSION_WORKFLOW.md` にCodex使用方法を追加
+2. **文書更新**: `.multi-agent/docs/MULTI_SESSION_WORKFLOW.md` にCodex使用方法を追加
 3. **将来対応**: Worker用モデル切替機能の実装（Codex/Claude Code/GPT-4など）
 
 #### H2. Human Control モード時の次ステップガイダンス
@@ -440,9 +440,9 @@ input_artifacts: []   # 依存する入力ファイルのパスリスト
 ```
 
 **実装箇所**:
-- `agents/commander/CLAUDE.md`
-- `agents/observer/CLAUDE.md`
-- `agents/worker/CLAUDE.md`
+- `.multi-agent/roles/commander/CLAUDE.md`
+- `.multi-agent/roles/observer/CLAUDE.md`
+- `.multi-agent/roles/worker/CLAUDE.md`
 
 ---
 
@@ -602,10 +602,10 @@ ps aux | grep claude
 ### C. 参照文書
 
 - [MULTI_SESSION_WORKFLOW.md](./MULTI_SESSION_WORKFLOW.md)
-- [RULEBOOK.md](../config/RULEBOOK.md)
-- [Commander CLAUDE.md](../agents/commander/CLAUDE.md)
-- [Observer CLAUDE.md](../agents/observer/CLAUDE.md)
-- [Worker CLAUDE.md](../agents/worker/CLAUDE.md)
+- [RULEBOOK.md](../.multi-agent/config/RULEBOOK.md)
+- [Commander CLAUDE.md](../.multi-agent/roles/commander/CLAUDE.md)
+- [Observer CLAUDE.md](../.multi-agent/roles/observer/CLAUDE.md)
+- [Worker CLAUDE.md](../.multi-agent/roles/worker/CLAUDE.md)
 
 ---
 

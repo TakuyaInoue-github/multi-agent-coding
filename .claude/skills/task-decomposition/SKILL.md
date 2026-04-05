@@ -124,9 +124,9 @@ decomposition:
 
 ## 関連ファイル
 
-Workerが実際に実行する形式は `templates/task/spec.md` を参照。
+Workerが実際に実行する形式は `.multi-agent/templates/task/spec.md` を参照。
 実際の分解例は `examples/` を参照。
-Gate1評価基準は `config/RULEBOOK.md` を参照。
+Gate1評価基準は `.multi-agent/config/RULEBOOK.md` を参照。
 
 ## マルチエージェントシステムとの統合
 
@@ -139,7 +139,7 @@ Gate1評価基準は `config/RULEBOOK.md` を参照。
 
 ## テンプレート参照
 
-`templates/task-spec.md` から `tasks/task-xxx/spec.md` を作成する際の変換マッピング：
+`.multi-agent/templates/task-spec.md` から `tasks/task-xxx/spec.md` を作成する際の変換マッピング：
 
 - `decomposition.tasks[].task_id` → `spec.md` の `task_id`
 - `decomposition.tasks[].permissions` → `spec.md` の `permissions`

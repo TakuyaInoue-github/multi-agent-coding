@@ -230,7 +230,7 @@ tasks:
 
 ```
 Error: runtime/BOARD.md が存在しません
-Action: templates/session/BOARD.md から初期化するか、ユーザーに確認
+Action: .multi-agent/templates/session/BOARD.md から初期化するか、ユーザーに確認
 ```
 
 ### YAML/JSON解析エラー
@@ -333,4 +333,4 @@ status-sync 実行後、以下を確認：
 - `runtime/BOARD.md` - タスク状態管理の実体
 - `runtime/EVENTLOG.json` - イベント記録の実体
 - `runtime/CONTEXT.md` - 方針・判断基準の実体
-- `config/RULEBOOK.md` - イベント記録の基準
+- `.multi-agent/config/RULEBOOK.md` - イベント記録の基準

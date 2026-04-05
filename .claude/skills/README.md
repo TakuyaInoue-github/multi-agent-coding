@@ -42,7 +42,7 @@ Skillsは `.claude/skills/` に配置され、Claude Codeによって自動的�
 ├── README.md（このファイル）
 ├── task-decomposition/
 │   ├── SKILL.md
-│   ├── templates/
+│   ├── .multi-agent/templates/
 │   └── examples/
 ├── gate-evaluation/
 │   ├── SKILL.md
@@ -54,7 +54,7 @@ Skillsは `.claude/skills/` に配置され、Claude Codeによって自動的�
 
 ## 関連ドキュメント
 
-- [agents/commander/CLAUDE.md](../../agents/commander/CLAUDE.md) - Commander用プロンプト（Skillsの使い方を含む）
-- [agents/observer/CLAUDE.md](../../agents/observer/CLAUDE.md) - Observer用プロンプト（Skillsの使い方を含む）
-- [config/RULEBOOK.md](../../config/RULEBOOK.md) - 評価基準
-- [templates/task/](../../templates/task/) - タスクテンプレート
+- [.multi-agent/roles/commander/CLAUDE.md](../../.multi-agent/roles/commander/CLAUDE.md) - Commander用プロンプト（Skillsの使い方を含む）
+- [.multi-agent/roles/observer/CLAUDE.md](../../.multi-agent/roles/observer/CLAUDE.md) - Observer用プロンプト（Skillsの使い方を含む）
+- [.multi-agent/config/RULEBOOK.md](../../.multi-agent/config/RULEBOOK.md) - 評価基準
+- [.multi-agent/templates/task/](../../.multi-agent/templates/task/) - タスクテンプレート
