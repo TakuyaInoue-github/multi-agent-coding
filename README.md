@@ -131,9 +131,17 @@ Commander と Observer は Claude Code の Skills 機構を活用します：
 
 ## ドキュメント
 
+### 使い方
 - [使い方ガイド](docs/GUIDE.md) - 詳細な使用方法
+- [マルチセッションワークフロー](.multi-agent/docs/MULTI_SESSION_WORKFLOW.md) - 複数セッションでの運用
 - [Skills ガイド](.claude/skills/README.md) - Skills の使い方
-- [改善計画](improvement/IMPROVEMENT_PLAN.md) - システム改善計画
+
+### 開発
+- [ブランチ管理戦略](.multi-agent/docs/BRANCH_STRATEGY.md) - Git ブランチ運用ルール
+- [Codex セットアップ](.multi-agent/docs/CODEX_SETUP.md) - Worker の Codex 統合
+
+### 参考
+- [テストレポート](.multi-agent/docs/TEST_REPORT.md) - validator.js 実装テスト結果
 - [移行ガイド](docs/MIGRATION.md) - ファイル構成の変更履歴
 
 ## ライセンス
