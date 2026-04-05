@@ -323,6 +323,8 @@ git worktree remove ../multi-agent-worker
 
 Git Flow では main と develop の両方を保護します。
 
+> **注**: プライベートリポジトリでは GitHub Team プラン（有料）が必要です。Free プランではパブリックリポジトリのみブランチ保護が機能します。詳細は [SETUP_BRANCH_PROTECTION.md](SETUP_BRANCH_PROTECTION.md) を参照してください。
+
 ### GitHub での設定手順
 
 1. リポジトリの **Settings** → **Branches** に移動
@@ -378,6 +380,45 @@ Branch name pattern: develop
 - main: 厳格に保護（PR + セルフレビュー必須）
 - develop: PR 必須だが承認は任意
 - 習慣化により品質を維持
+
+### プライベートリポジトリでの運用（技術的強制力なし）
+
+ブランチ保護が機能しない場合、以下の運用ルールで対応：
+
+**基本ルール**:
+1. **main/develop への直接コミット禁止**（自己規律）
+2. **必ず feature ブランチを作成**
+3. **PR を作成してセルフレビュー**
+4. **GitHub でマージ**（Squash and merge 推奨）
+
+**補助ツール（任意）**:
+```bash
+# pre-push hook で警告表示
+cat > .git/hooks/pre-push << 'EOF'
+#!/bin/bash
+branch=$(git rev-parse --abbrev-ref HEAD)
+if [ "$branch" = "main" ] || [ "$branch" = "develop" ]; then
+    echo "⚠️  WARNING: Pushing to $branch directly!"
+    echo "Consider using a feature branch and PR instead."
+    read -p "Continue anyway? (y/N): " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        exit 1
+    fi
+fi
+EOF
+chmod +x .git/hooks/pre-push
+```
+
+**推奨フロー**:
+```bash
+# 常にこのフローを守る
+git checkout develop
+git checkout -b feature/my-feature
+# ... 開発 ...
+git push -u origin feature/my-feature
+# GitHub で PR 作成 → セルフレビュー → Merge
+```
 
 ## クイックリファレンス
 
