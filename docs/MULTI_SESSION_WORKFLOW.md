@@ -37,21 +37,21 @@ Commander (セッション1)  →  マージ
 
 ```bash
 # ターミナル1: Commander
-cd /home/t_inoue/projects/multi-agent
+cd /path/to/multi-agent
 tmux new-session -s commander
 # セッション内で:
 cat agents/commander/CLAUDE.md  # プロンプトを確認
 claude
 
 # ターミナル2: Observer
-cd /home/t_inoue/projects/multi-agent
+cd /path/to/multi-agent
 tmux new-session -s observer
 # セッション内で:
 cat agents/observer/CLAUDE.md  # プロンプトを確認
 claude
 
 # ターミナル3: Worker-1
-cd /home/t_inoue/projects/multi-agent
+cd /path/to/multi-agent
 tmux new-session -s worker-1
 # セッション内で:
 cat agents/worker/CLAUDE.md  # プロンプトを確認

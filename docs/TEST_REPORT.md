@@ -550,7 +550,7 @@ spec.md生成時に、YAML frontmatterのスキーマバリデーションを実
 ### A. テスト時のディレクトリ構造
 
 ```
-/home/t_inoue/projects/multi-agent/
+multi-agent/
 ├── agents/
 │   ├── commander/CLAUDE.md
 │   ├── observer/CLAUDE.md

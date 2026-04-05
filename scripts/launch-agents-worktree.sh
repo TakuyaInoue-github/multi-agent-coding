@@ -4,7 +4,8 @@
 
 set -e
 
-PROJECT_DIR="/home/t_inoue/projects/multi-agent"
+# プロジェクトディレクトリを自動取得（このスクリプトの親ディレクトリ）
+PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$PROJECT_DIR"
 
 echo "==================================="
