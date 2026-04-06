@@ -6,76 +6,151 @@
 
 ## 環境管理
 
-### 仮想環境
+### パッケージマネージャー（2025年推奨）
 
-**推奨**: `venv` (Python 標準) または `poetry` (依存関係管理強化版)
+**推奨**: **`uv`** - Rust製の超高速パッケージマネージャー（pip/venv/pip-tools の10-100倍高速）
 
 ```bash
-# venv を使用する場合
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-venv\Scripts\activate     # Windows
+# uv のインストール
+curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# poetry を使用する場合
-poetry install
-poetry shell
+# プロジェクト初期化
+uv init
+
+# Python バージョン指定（自動ダウンロード）
+uv python pin 3.11
+
+# 仮想環境の作成と有効化（自動）
+uv venv
+source .venv/bin/activate  # Linux/Mac
+.venv\Scripts\activate     # Windows
+
+# パッケージのインストール
+uv add requests
+uv add --dev pytest ruff mypy
+```
+
+**従来の方法（互換性のため残す）**:
+```bash
+# venv + pip を使用する場合
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
 ```
 
 ### 依存関係管理
 
 **ファイル**:
-- `requirements.txt`: 本番環境の依存関係
-- `requirements-dev.txt`: 開発環境の依存関係（テスト・リンターなど）
-- または `pyproject.toml` + `poetry.lock` (poetry 使用時)
+- **`pyproject.toml`**: プロジェクトメタデータと依存関係（推奨、PEP 621準拠）
+- **`uv.lock`**: 依存関係のロックファイル（uv 使用時、自動生成）
+- `requirements.txt`: 従来形式（後方互換性のため）
+
+**pyproject.toml 例**:
+```toml
+[project]
+name = "myproject"
+version = "0.1.0"
+dependencies = [
+    "requests>=2.31.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "ruff>=0.1.0",
+    "mypy>=1.5.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+```
 
 **タスク分解時の注意**:
 - パッケージ追加タスクは独立させる
-- `requirements.txt` の更新は明示的な output_artifacts に含める
+- `pyproject.toml` と `uv.lock` の更新を output_artifacts に含める
+- uv 使用時は `uv add` コマンドを使用
 
 ---
 
 ## コード品質
 
-### フォーマッター
+### オールインワンツール: Ruff（2025年推奨）
 
-**推奨**: `black` (妥協のないコードフォーマッター)
+**推奨**: **`Ruff`** - Rust製の超高速リンター＆フォーマッター
+
+**特徴**:
+- black, isort, flake8, pylint など **10以上のツールを統合**
+- **900以上のリントルール**をサポート
+- 従来のツールより **10-100倍高速**
+- フォーマットとリントを1つのツールで完結
 
 ```bash
-black src/
-black --check src/  # CI での確認
+# インストール
+uv add --dev ruff
+
+# フォーマット
+ruff format src/
+ruff format --check src/  # CI での確認
+
+# リント
+ruff check src/
+ruff check --fix src/  # 自動修正
+
+# 両方を実行
+ruff check --fix src/ && ruff format src/
 ```
 
 **設定例** (`pyproject.toml`):
 ```toml
-[tool.black]
+[tool.ruff]
 line-length = 88
-target-version = ['py311']
-include = '\.pyi?$'
+target-version = "py311"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "N",   # pep8-naming
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+]
+ignore = []
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]  # unused import in __init__.py
+"tests/*" = ["D"]  # docstring in tests
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
 ```
 
-### リンター
+### 従来のツール（後方互換性のため残す）
 
-**推奨**: `flake8` (PEP 8 準拠チェック) + `pylint` (より厳格)
-
+**black + flake8 を使用する場合**:
 ```bash
+black src/
 flake8 src/
-pylint src/
 ```
 
-**設定例** (`.flake8`):
-```ini
-[flake8]
-max-line-length = 88
-extend-ignore = E203, W503
-exclude = .git,__pycache__,venv
-```
+**注意**: Ruff は black と flake8 の完全な置き換えとして使用できます。新規プロジェクトでは Ruff を推奨します。
 
 ### 型チェック
 
-**推奨**: `mypy` (静的型チェッカー)
+**推奨**: `mypy` (業界標準) または `pyright` (高速、VS Code統合)
 
 ```bash
+# mypy
+uv add --dev mypy
 mypy src/
+
+# pyright（VS Code使用時）
+uv add --dev pyright
+pyright src/
 ```
 
 **ベストプラクティス**:
@@ -127,21 +202,33 @@ project/
 
 ## タスク分解時の考慮事項
 
-### セットアップタスク
+### セットアップタスク（2025年推奨: uv + Ruff）
 
 最初に以下を含むセットアップタスクを配置：
-1. 仮想環境の作成
-2. `requirements.txt` の作成
-3. 開発ツールのインストール（`black`, `flake8`, `mypy`, `pytest`）
-4. `pyproject.toml` の設定
-5. ディレクトリ構造の作成 (`src/`, `tests/`)
+1. **uv のインストール確認**
+2. **Python バージョンの固定**（`uv python pin 3.11`）
+3. **仮想環境の作成**（`uv venv`）
+4. **pyproject.toml の作成**（プロジェクトメタデータと依存関係）
+5. **開発ツールのインストール**（`uv add --dev ruff mypy pytest pytest-cov`）
+6. **ディレクトリ構造の作成** (`src/`, `tests/`)
+
+**従来の方法（venv + pip）**:
+1. 仮想環境の作成（`python -m venv venv`）
+2. `requirements.txt` と `requirements-dev.txt` の作成
+3. 開発ツールのインストール（`pip install -r requirements-dev.txt`）
 
 ### パッケージ管理タスク
 
 新しいパッケージを追加する場合：
+
+**uv 使用時**:
+- `pyproject.toml` と `uv.lock` の更新を output_artifacts に明記
+- `uv add package-name` の実行を指示に含める
+- `environment_verified: true` に更新
+
+**従来の方法**:
 - `requirements.txt` の更新を output_artifacts に明記
 - `pip install -r requirements.txt` の実行を指示に含める
-- `environment_verified: true` に更新
 
 ### テストタスク
 
@@ -158,18 +245,25 @@ Python コードの品質チェック項目：
 
 ### 必須項目 (severity: critical)
 
+**モダンツールチェーン（2025年推奨）**:
+- [ ] `ruff format --check` でフォーマット確認が通過
+- [ ] `ruff check` で警告・エラーなし
+- [ ] 仮想環境が使用されている（`.venv/` 存在）
+- [ ] `pyproject.toml` が存在し、依存関係が記載されている（uv使用時）
+
+**従来のツールチェーン（後方互換性）**:
 - [ ] `black --check` でフォーマット確認が通過
 - [ ] `flake8` で警告・エラーなし
-- [ ] 仮想環境が使用されている（`venv/` または `.venv/` 存在）
 - [ ] `requirements.txt` が存在し、依存関係が記載されている
 
 ### 推奨項目 (severity: major)
 
-- [ ] `mypy` で型エラーなし（型ヒントが使われている場合）
+- [ ] `mypy` または `pyright` で型エラーなし（型ヒントが使われている場合）
 - [ ] `pytest` でテストがすべて通過
 - [ ] カバレッジが 80% 以上（テストタスクの場合）
 - [ ] `__init__.py` が適切に配置されている
 - [ ] docstring が主要な関数・クラスに存在する
+- [ ] `uv.lock` が存在し、依存関係が固定されている（uv使用時）
 
 ### 任意項目 (severity: minor)
 
@@ -189,7 +283,15 @@ pip install requests
 python my_script.py
 ```
 
-✅ **良い例**:
+✅ **良い例（2025年推奨: uv）**:
+```bash
+uv venv
+source .venv/bin/activate
+uv add requests
+python my_script.py
+```
+
+✅ **良い例（従来の方法）**:
 ```bash
 python -m venv venv
 source venv/bin/activate
@@ -221,7 +323,21 @@ def calculate(a: int, b: int) -> int:
 
 ## 参考資料
 
+### 公式ドキュメント
+
 - [PEP 8 - Style Guide for Python Code](https://peps.python.org/pep-0008/)
-- [Black - The uncompromising code formatter](https://black.readthedocs.io/)
+- [PEP 621 - Storing project metadata in pyproject.toml](https://peps.python.org/pep-0621/)
 - [pytest - Full-featured Python testing tool](https://docs.pytest.org/)
 - [mypy - Optional Static Typing for Python](https://mypy.readthedocs.io/)
+
+### モダンツール（2025年推奨）
+
+- [Ruff - An extremely fast Python linter and code formatter](https://docs.astral.sh/ruff/)
+- [uv - An extremely fast Python package installer and resolver](https://docs.astral.sh/uv/)
+- [Pyright - Fast type checker for Python](https://github.com/microsoft/pyright)
+
+### 従来のツール
+
+- [Black - The uncompromising code formatter](https://black.readthedocs.io/)
+- [Flake8 - Your Tool For Style Guide Enforcement](https://flake8.pycqa.org/)
+- [isort - A Python utility / library to sort imports](https://pycqa.github.io/isort/)
