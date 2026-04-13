@@ -1,6 +1,11 @@
 ---
 name: go-setup
-description: Go プロジェクトの初期セットアップタスクを生成
+description: |
+  Set up a Go project environment. Invoke automatically when starting a new Go project
+  or when the environment is not yet configured.
+  Triggers: "setup Go project", "initialize Go", "create Go module",
+  missing go.mod, first task in a Go project.
+  Sets up: go mod init, directory structure (cmd/, internal/, pkg/), golangci-lint.
 disable-model-invocation: false
 user-invocable: true
 allowed-tools: [editor, bash]

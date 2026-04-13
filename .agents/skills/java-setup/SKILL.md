@@ -1,6 +1,11 @@
 ---
 name: java-setup
-description: Java プロジェクトの初期セットアップタスクを生成
+description: |
+  Set up a Java project environment. Invoke automatically when starting a new Java project
+  or when the environment is not yet configured.
+  Triggers: "setup Java project", "initialize Java", "create Maven/Gradle project",
+  missing pom.xml or build.gradle, first task in a Java project.
+  Sets up: Maven/Gradle, package structure, checkstyle, JUnit 5, Mockito.
 disable-model-invocation: false
 user-invocable: true
 allowed-tools: [editor, bash]

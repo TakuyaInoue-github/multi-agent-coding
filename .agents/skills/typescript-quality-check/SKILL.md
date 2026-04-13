@@ -1,6 +1,11 @@
 ---
 name: typescript-quality-check
-description: TypeScript コードの品質チェック（Gate2 評価で Observer が使用）
+description: |
+  Run quality checks on TypeScript code. Invoke automatically after writing or modifying
+  TypeScript files, before committing, or when asked to verify code quality.
+  Triggers: after implementing .ts/.tsx files, before git commit, "check quality", "run checks",
+  "verify implementation", Gate2 evaluation by Observer.
+  Checks: tsc type check, prettier format, eslint lint, vitest/jest (testing tasks only), build.
 disable-model-invocation: false
 user-invocable: true
 allowed-tools: [bash]

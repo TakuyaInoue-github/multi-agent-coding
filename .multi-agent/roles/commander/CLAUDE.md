@@ -118,9 +118,30 @@ Skillを使用しない場合は以下の手順で進めます：
    - `permissions`：必要最小限のスコープ
    - `commander_reasoning`：なぜこの粒度・依存関係で切ったかの根拠
 3. `tasks/task-xxx/spec.md` を作成する
-4. `/sync-status sync-board task-xxx '{"status":"pending"}'` でBOARD.mdを更新
-5. `/sync-status append-event task-xxx '{"action":"task_created","actor":"commander","severity":"null","detail":"タスク作成完了"}'` でEVENTLOGに記録
-6. Observer の Gate1 評価を待つ（`runtime/BOARD.md` の `observer_check_triggers: spec_created` で自動検知）
+4. `tasks/task-xxx/AGENTS.md` を作成する（Codex 向け、次セクション参照）
+5. `/sync-status sync-board task-xxx '{"status":"pending"}'` でBOARD.mdを更新
+6. `/sync-status append-event task-xxx '{"action":"task_created","actor":"commander","severity":"null","detail":"タスク作成完了"}'` でEVENTLOGに記録
+7. Observer の Gate1 評価を待つ（`runtime/BOARD.md` の `observer_check_triggers: spec_created` で自動検知）
+
+### tasks/task-xxx/AGENTS.md の作成（Codex 向け）
+
+`spec.md` と同時に `.multi-agent/templates/task/AGENTS.md` を元に作成する。
+以下を spec.md の内容に合わせて埋める：
+
+- **言語**: `CONTEXT.md` の `技術スタック.language` から
+- **worker_type**: spec.md の `worker_type` から
+- **output_artifacts**: spec.md の `output_artifacts` をそのまま転記
+- **品質チェックコマンド**: 言語に応じて以下を記載
+
+  | 言語 | チェックコマンド |
+  |------|----------------|
+  | Python (ruff) | `ruff format --check src/` `ruff check src/` `pytest tests/`（testing時） |
+  | TypeScript | `npx tsc --noEmit` `npx prettier --check "src/**/*.{ts,tsx}"` `npx eslint "src/**/*.{ts,tsx}"` |
+  | Go | `gofmt -d .` `go vet ./...` `go build ./...` |
+  | Java | `mvn compile -q` `mvn checkstyle:check -q` |
+
+- **書き込み可能なパス**: spec.md の `permissions.filesystem.write` から
+- **前タスクからの申し送り**: spec.md の `注意事項` セクションから転記
 
 **Human Control モード時の出力:**
 ```markdown
@@ -215,7 +236,7 @@ task-xxx の一次評価を完了し、commander_review.md を作成しました
 Observer が `runtime/DISCUSSION.md` に fail を起票したら：
 
 1. `runtime/DISCUSSION.md` を読んで Observer の指摘を把握する
-2. `.multi-agent/.multi-agent/config/RULEBOOK.md` を参照して指摘の妥当性を確認する
+2. `.multi-agent/config/RULEBOOK.md` を参照して指摘の妥当性を確認する
 3. `runtime/BOARD.md` の `policy.discussion_round_limit` を確認する
 4. 以下のいずれかで応答する：
    - 受け入れ：`spec.md` を修正 or Worker に再指示 → フロー再開
@@ -384,5 +405,5 @@ runtime/ ファイルを更新し、監査証跡を作成します。
 ## 関連ドキュメント
 
 - `.claude/skills/README.md` - Skills 一覧とベストプラクティス
-- `.multi-agent/.multi-agent/config/RULEBOOK.md` - 評価基準
+- `.multi-agent/config/RULEBOOK.md` - 評価基準
 - `.multi-agent/templates/task/` - タスクテンプレート

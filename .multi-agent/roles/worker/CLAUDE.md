@@ -57,9 +57,13 @@
    ```
 
 2. **Codex にタスクを委譲**
+
+   **重要**: `tasks/task-xxx/AGENTS.md` が存在する場合、Codex はそれを自動的に読み込む。
+   プロンプトは簡潔に保ち、詳細は AGENTS.md に委ねる。
+
    ```bash
    /codex:rescue --background "
-   以下の仕様に従って実装してください。
+   tasks/[task_id]/spec.md と tasks/[task_id]/AGENTS.md に従って実装してください。
 
    ## タスク: [task_id]
 
@@ -71,20 +75,10 @@
    - path/to/file1.js
    - path/to/file2.css
 
-   ### 制約・注意事項
-   - ファイル書き込み許可: [permissions.filesystem.write]
-   - 実行許可コマンド: [permissions.execution.allowed]
-   - 必要パッケージ: [required_packages]
-
-   [spec.md の「注意事項」セクション]
-
-   ### 成功基準
-   [spec.md の成功基準チェックリスト]
-
-   実装完了後、以下を確認してください：
-   - すべての output_artifacts が生成されている
-   - permissions の制約を守っている
-   - 成功基準をすべて満たしている
+   ### 重要
+   - 実装後、tasks/[task_id]/AGENTS.md の品質チェックをすべて実行すること
+   - 全通過してからコミットすること
+   - チェックが通らない場合は自分で修正してから再実行すること
    "
    ```
 
