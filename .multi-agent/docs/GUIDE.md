@@ -20,36 +20,35 @@ Worker（Codex セッション3〜）
 
 ## セットアップ
 
-### 1. ファイルを配置する
+### 1. ファイル構成
+
+このリポジトリをクローンするだけで使えます。主要なファイルの場所：
 
 ```
 your-project/
-  CLAUDE.md          ← CLAUDE_COMMANDER.md をリネームして配置
-  RULEBOOK.md
-  BOARD.md
-  CONTEXT.md
-  DISCUSSION.md
-  EVENTLOG.json
-  SUMMARY.md
-  tasks/
-    spec_template.md
-    result_template.md
-    commander_review_template.md
-    observer_review_template.md
-  archive/
-  （既存のプロジェクトファイル）
+├── AGENTS.md                          # Codex向けプロジェクト共通設定
+├── .claude/skills/                    # Claude Code Skills（Commander/Observer用）
+├── .agents/skills/                    # Codex向けSkills（Worker用）
+├── .multi-agent/
+│   ├── roles/
+│   │   ├── commander/CLAUDE.md        # Commander のシステムプロンプト
+│   │   ├── observer/CLAUDE.md         # Observer のシステムプロンプト
+│   │   └── worker/CLAUDE.md           # Worker のシステムプロンプト
+│   ├── config/RULEBOOK.md             # Observer の評価基準
+│   └── templates/task/                # タスクテンプレート
+├── runtime/                           # セッション状態
+└── tasks/                             # タスク実行結果
 ```
 
-Observer・Worker 用の CLAUDE.md は別途保管しておき、
-各セッション開始時にシステムプロンプトとして渡します。
-
 ### 2. BOARD.md を初期設定する
+
+`runtime/BOARD.md` を作成（または更新）して以下を設定します：
 
 ```yaml
 session_id: session-001
 base_branch: develop        # ユーザーが作業起点を指定
 base_branch_created_by: user
-started_at: 2026-03-31T10:00:00
+started_at: 2026-04-01T10:00:00
 ```
 
 `base_branch` はユーザーが事前に作成してから指定します。
@@ -57,9 +56,14 @@ Commander がマージできるのはこのブランチまでです。
 
 ### 3. CONTEXT.md にプロジェクト方針を書く
 
+`runtime/CONTEXT.md` に以下を記載します：
+
 ```markdown
 ## プロジェクト方針
 （ユーザーから受けた指示・全体目標）
+
+## 技術スタック
+language: Python  # または TypeScript / Go / Java
 ```
 
 ---
@@ -71,7 +75,7 @@ Commander がマージできるのはこのブランチまでです。
 Claude Code を起動し、以下を伝えます：
 
 ```
-CLAUDE.md（CLAUDE_COMMANDER.md）を読んで、
+.multi-agent/roles/commander/CLAUDE.md を読んで、
 セッション開始手順に従ってください。
 今回のタスクは：（ユーザーの指示）
 ```
@@ -81,24 +85,22 @@ CLAUDE.md（CLAUDE_COMMANDER.md）を読んで、
 Claude Code を別セッションで起動し、以下を伝えます：
 
 ```
-（CLAUDE_OBSERVER.md の内容を貼り付ける）
-
+.multi-agent/roles/observer/CLAUDE.md を読んで、
 自律チェックを開始してください。
 プロジェクトルートは（パス）です。
 ```
 
 Observer は Commander・Worker とは独立して動きます。
 定期的に手動で「チェックしてください」と声をかけるか、
-Commander が `BOARD.md` の `observer_request` を更新することで呼び出せます。
+Commander が `runtime/BOARD.md` の `observer_request` を更新することで呼び出せます。
 
 ### Worker セッション
 
-Codex を起動し、以下を伝えます：
+Claude Code（Codex Plugin 使用）を起動し、以下を伝えます：
 
 ```
-（CLAUDE_WORKER.md の内容を貼り付ける）
-
-tasks/task-xxx/spec.md を読んで作業を開始してください。
+.multi-agent/roles/worker/CLAUDE.md を読んで、
+tasks/task-xxx/spec.md に従って作業を開始してください。
 ```
 
 Worker は spec.md を受け取るたびに新しいセッションを起動します。
@@ -113,17 +115,18 @@ Worker は spec.md を受け取るたびに新しいセッションを起動し�
 【2】Commander がタスクを分解する
   → tasks/task-xxx/ を作成
   → spec.md を書く
-  → BOARD.md を更新する
+  → tasks/task-xxx/AGENTS.md を書く（Codex 向け）
+  → runtime/BOARD.md を更新する
 
 【3】Observer が Gate1 評価を行う
   → tasks/task-xxx/observer_review.md を書く
   → pass → Commander が Worker に着手許可
-  → fail → DISCUSSION.md に起票 → Commander と議論
+  → fail → runtime/DISCUSSION.md に起票 → Commander と議論
 
 【4】Worker がタスクを実行する
   → task/task-xxx ブランチで作業
-  → 中間報告を result.md に追記
-  → 完了したら result.md を最終報告に更新
+  → Codex に実装を委譲
+  → 完了したら result.md を最終報告として作成
 
 【5】Commander が一次評価を行う
   → commander_review.md を書く
@@ -131,7 +134,7 @@ Worker は spec.md を受け取るたびに新しいセッションを起動し�
 【6】Observer が Gate2 評価を行う
   → observer_review.md を書く
   → pass → Commander が base_branch にマージ
-  → fail → DISCUSSION.md に起票 → Commander と議論
+  → fail → runtime/DISCUSSION.md に起票 → Commander と議論
 
 【7】次のタスクへ
 ```
@@ -141,17 +144,17 @@ Worker は spec.md を受け取るたびに新しいセッションを起動し�
 ## 議論・上告フロー
 
 ```
-Observer が fail を起票（DISCUSSION.md）
+Observer が fail を起票（runtime/DISCUSSION.md）
 　　↓
-Commander が応答（最大 N 往復・BOARD.md の discussion_round_limit）
+Commander が応答（最大 N 往復・runtime/BOARD.md の discussion_round_limit）
 　　↓
 合意 → フロー再開
 未合意（N 往復到達）→ Commander が上告義務
 　　↓
 Commander がユーザーに状況を説明して決裁を求める
 
-※ fail 記録は EVENTLOG.json に常時蓄積
-   SUMMARY.md でユーザーに常時可視
+※ fail 記録は runtime/EVENTLOG.json に常時蓄積
+   runtime/SUMMARY.md でユーザーに常時可視
    Commander が上告しなくても証拠として残る
 ```
 
@@ -163,33 +166,35 @@ Commander がユーザーに状況を説明して決裁を求める
 
 ```
 【終了時】
-Commander：CONTEXT.md を更新して終了
+Commander：runtime/CONTEXT.md を更新して終了
   - 現時点の判断基準
   - 未解決事項
   - 次セッションへの申し送り
 
 【再開時】
 Commander：以下の順で読み込む
-  1. CONTEXT.md
-  2. BOARD.md
-  3. EVENTLOG.json の末尾 20件
-  4. SUMMARY.md の未解決イベント一覧
+  1. runtime/CONTEXT.md
+  2. runtime/BOARD.md
+  3. runtime/EVENTLOG.json の末尾 20件
+  4. runtime/SUMMARY.md の未解決イベント一覧
   5. suspended タスクの result.md
-  6. BOARD.md の observer_request を確認
+  6. runtime/BOARD.md の observer_request を確認
 ```
 
-CONTEXT.md はタスク完了ごとに更新することを推奨します（クラッシュ対策）。
+`runtime/CONTEXT.md` はタスク完了ごとに更新することを推奨します（クラッシュ対策）。
 
 ---
 
 ## タスクの作り方
 
-`tasks/spec_template.md` をコピーして `tasks/task-xxx/spec.md` を作成します。
+`.multi-agent/templates/task/spec.md` をコピーして `tasks/task-xxx/spec.md` を作成します。
+同時に `.multi-agent/templates/task/AGENTS.md` をコピーして `tasks/task-xxx/AGENTS.md` も作成します。
 
 ```
 tasks/
   task-001/
     spec.md              ← Commander が作成
+    AGENTS.md            ← Commander が作成（Codex向け設定）
     result.md            ← Worker が作成
     commander_review.md  ← Commander が作成
     observer_review.md   ← Observer が作成
@@ -216,15 +221,16 @@ commander_reasoning: |       # タスク分解の根拠（Observer が Gate1 で
 
 | ファイル | Commander | Observer | Worker |
 |---------|----------|---------|--------|
-| BOARD.md | ✅ | ❌ | ❌ |
-| CONTEXT.md | ✅ | ❌ | ❌ |
-| DISCUSSION.md | ✅ | ✅ | ❌ |
-| EVENTLOG.json | ✅ | ✅ | ❌ |
-| SUMMARY.md | ✅ | ✅ | ❌ |
-| spec.md | ✅ | ❌ | ❌ |
-| result.md | ❌ | ❌ | ✅ |
-| commander_review.md | ✅ | ❌ | ❌ |
-| observer_review.md | ❌ | ✅ | ❌ |
+| runtime/BOARD.md | ✅ | ❌ | ❌ |
+| runtime/CONTEXT.md | ✅ | ❌ | ❌ |
+| runtime/DISCUSSION.md | ✅ | ✅ | ❌ |
+| runtime/EVENTLOG.json | ✅ | ✅ | ❌ |
+| runtime/SUMMARY.md | ✅ | ✅ | ❌ |
+| tasks/task-xxx/spec.md | ✅ | ❌ | ❌ |
+| tasks/task-xxx/AGENTS.md | ✅ | ❌ | ❌ |
+| tasks/task-xxx/result.md | ❌ | ❌ | ✅ |
+| tasks/task-xxx/commander_review.md | ✅ | ❌ | ❌ |
+| tasks/task-xxx/observer_review.md | ❌ | ✅ | ❌ |
 
 ---
 
@@ -250,32 +256,32 @@ Worker のコミットメッセージ：
 
 ### Observer を今すぐ呼び出したい
 
-`BOARD.md` の `observer_request` を更新します：
+`runtime/BOARD.md` の `observer_request` を更新します：
 
 ```yaml
 observer_request:
   task_id: task-001
   reason: "途中成果物を早期確認してほしい"
-  requested_at: "2026-03-31T11:00:00"
+  requested_at: "2026-04-01T11:00:00"
 ```
 
 Observer セッションに「チェックしてください」と声をかけます。
 
 ### タスクが stuck している
 
-`BOARD.md` で該当タスクの状態を確認します。
-`observer_timeout` が EVENTLOG.json に記録されている場合は
+`runtime/BOARD.md` で該当タスクの状態を確認します。
+`observer_timeout` が `runtime/EVENTLOG.json` に記録されている場合は
 Commander セッションに「task-xxx の状態を確認してください」と伝えます。
 
 ### セッションが突然終了した
 
-`CONTEXT.md` と `BOARD.md` を読み込んだ新しい Commander セッションを起動します。
+`runtime/CONTEXT.md` と `runtime/BOARD.md` を読み込んだ新しい Commander セッションを起動します。
 `suspended` タスクがあれば `result.md` を読んで `resume_action` を決定します。
 
 ### ユーザーが作業を中断したい
 
 Commander セッションに「ここで一旦止めてください」と伝えます。
-Commander が `CONTEXT.md` を更新して終了します。
+Commander が `runtime/CONTEXT.md` を更新して終了します。
 Worker には spec.md に `status: suspended` が追記されます。
 
 ---
@@ -284,37 +290,50 @@ Worker には spec.md に `status: suspended` が追記されます。
 
 ```
 your-project/
-  CLAUDE.md                    # Commander 用（CLAUDE_COMMANDER.md をリネーム）
-  RULEBOOK.md                  # Observer の評価基準
-  BOARD.md                     # タスク状態・依存グラフ・policy
-  CONTEXT.md                   # セッション引き継ぎ
-  DISCUSSION.md                # Commander-Observer 議論ログ
-  EVENTLOG.json                # 全イベント記録（機械処理用）
-  SUMMARY.md                   # 人間向け進捗サマリー
-
-  tasks/
-    spec_template.md           # タスク指示書テンプレート
-    result_template.md         # 成果物報告テンプレート
-    commander_review_template.md
-    observer_review_template.md
-    task-001/
-      spec.md
-      result.md
-      commander_review.md
-      observer_review.md
-
-  archive/
-    DISCUSSION_archive_001.md  # DISCUSSION 肥大化時の退避先
-    CONTEXT_archive_001.md     # 古いセッションの CONTEXT
-
-  （既存のプロジェクトファイル）
-```
-
----
-
-## 別途保管するファイル（プロジェクトルートには置かない）
-
-```
-CLAUDE_OBSERVER.md   # Observer セッション開始時にシステムプロンプトとして渡す
-CLAUDE_WORKER.md     # Worker セッション開始時にシステムプロンプトとして渡す
+├── AGENTS.md                          # Codex向けプロジェクト共通設定
+│
+├── .claude/skills/                    # Claude Code Skills（Commander/Observer用）
+│   ├── task-decomposition/            # /decompose-task
+│   ├── gate-evaluation/               # /evaluate-gate
+│   ├── status-sync/                   # /sync-status
+│   ├── code-reading/
+│   ├── code-review/
+│   └── {python,typescript,go,java}-{setup,quality-check}/
+│
+├── .agents/skills/                    # Codex向けSkills（Worker用）
+│   └── {python,typescript,go,java}-{setup,quality-check}/
+│
+├── .multi-agent/
+│   ├── roles/
+│   │   ├── commander/CLAUDE.md        # Commander のシステムプロンプト
+│   │   ├── observer/CLAUDE.md         # Observer のシステムプロンプト
+│   │   └── worker/CLAUDE.md           # Worker のシステムプロンプト
+│   ├── config/
+│   │   ├── RULEBOOK.md                # Observer の評価基準
+│   │   └── languages/                 # 言語固有の設定
+│   ├── templates/task/                # タスクテンプレート
+│   │   ├── spec.md
+│   │   ├── AGENTS.md                  # Codex向けタスク設定テンプレート
+│   │   ├── result.md
+│   │   ├── commander_review.md
+│   │   └── observer_review.md
+│   └── docs/
+│       ├── GUIDE.md                   # このファイル
+│       ├── MIGRATION.md               # ファイル構成の変更履歴
+│       └── ...
+│
+├── runtime/                           # セッション状態
+│   ├── BOARD.md                       # タスク状態・依存グラフ・policy
+│   ├── CONTEXT.md                     # セッション引き継ぎ
+│   ├── DISCUSSION.md                  # Commander-Observer 議論ログ
+│   ├── EVENTLOG.json                  # 全イベント記録（機械処理用）
+│   └── SUMMARY.md                     # 人間向け進捗サマリー
+│
+└── tasks/                             # タスク実行結果
+    └── task-xxx/
+        ├── spec.md
+        ├── AGENTS.md
+        ├── result.md
+        ├── commander_review.md
+        └── observer_review.md
 ```

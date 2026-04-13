@@ -1,6 +1,11 @@
 ---
 name: typescript-setup
-description: TypeScript プロジェクトの初期セットアップタスクを生成
+description: |
+  Set up a TypeScript project environment. Invoke automatically when starting a new TypeScript
+  project or when the environment is not yet configured.
+  Triggers: "setup TypeScript project", "initialize TypeScript", "create TS environment",
+  missing package.json or tsconfig.json, first task in a TypeScript project.
+  Sets up: npm/pnpm, tsconfig with strict mode, prettier, eslint, vitest.
 disable-model-invocation: false
 user-invocable: true
 allowed-tools: [editor, bash]

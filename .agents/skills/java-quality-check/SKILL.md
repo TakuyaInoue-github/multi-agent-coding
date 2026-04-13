@@ -1,6 +1,11 @@
 ---
 name: java-quality-check
-description: Java コードの品質チェック（Gate2 評価で Observer が使用）
+description: |
+  Run quality checks on Java code. Invoke automatically after writing or modifying Java files,
+  before committing, or when asked to verify code quality.
+  Triggers: after implementing .java files, before git commit, "check quality", "run checks",
+  "verify implementation", Gate2 evaluation by Observer.
+  Checks: mvn compile, checkstyle, mvn test (testing tasks only).
 disable-model-invocation: false
 user-invocable: true
 allowed-tools: [bash]

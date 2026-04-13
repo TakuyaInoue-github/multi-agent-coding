@@ -49,9 +49,9 @@ tmux attach-session -t worker-1    # Worker
 
 1. `runtime/` ディレクトリの状態ファイルを確認
 2. Commander セッションを起動
-3. `agents/commander/CLAUDE.md` をシステムプロンプトとして使用
+3. `.multi-agent/roles/commander/CLAUDE.md` をシステムプロンプトとして使用
 
-詳細は [docs/GUIDE.md](docs/GUIDE.md) を参照してください。
+詳細は [.multi-agent/docs/GUIDE.md](.multi-agent/docs/GUIDE.md) を参照してください。
 
 ### Codex Plugin のセットアップ（Worker のみ）
 
@@ -75,28 +75,36 @@ Worker は実装タスクを **Codex に委譲**します。初回のみ以下�
 
 ```
 my-project/              # ユーザーのプロジェクト
+├── AGENTS.md            # Codex向けプロジェクト共通設定
 ├── .claude/             # Claude Code標準
-│   ├── skills/          # タスク分解・評価等のSkills
-│   └── agents/          # Subagent（Claude Code標準機能）
-├── .codex/              # Codex Plugin設定
+│   └── skills/          # Commander/Observer用Skills（タスク分解・評価等）
+├── .agents/             # Worker（Codex）向けSkills
+│   └── skills/          # 言語別セットアップ・品質チェックSkills
 ├── .multi-agent/        # Multi-Agentフレームワーク
 │   ├── roles/           # エージェント定義（システムプロンプト）
 │   │   ├── commander/
 │   │   ├── observer/
 │   │   └── worker/
 │   ├── config/          # 設定・ルール
-│   ├── templates/       # テンプレート
-│   ├── docs/            # ドキュメント
-│   └── scripts/         # 起動スクリプト
-├── runtime/             # セッション状態（実行時生成）
-├── tasks/               # タスク結果（実行時生成）
+│   ├── templates/       # テンプレート（spec.md, AGENTS.md等）
+│   └── docs/            # ドキュメント
+├── runtime/             # セッション状態
+├── tasks/               # タスク結果
+│   └── task-xxx/
+│       ├── spec.md      # タスク仕様（Commander作成）
+│       ├── AGENTS.md    # タスク固有のCodex設定（Commander作成）
+│       ├── result.md    # 実装結果（Worker作成）
+│       ├── commander_review.md
+│       └── observer_review.md
 └── [プロジェクトファイル]
 ```
 
 **ポイント**:
 - `.multi-agent/` - フレームワークファイル（ドット付きで非表示）
+- `.claude/skills/` - Claude Code Skills（Commander/Observer用）
+- `.agents/skills/` - Codex向けSkills（Worker用）
+- `AGENTS.md` - Codexが自動読み込みするプロジェクト共通設定
 - `runtime/`, `tasks/` - 実行時に生成（`.gitignore`で除外）
-- `.claude/agents/` - Claude Code標準のSubagent（我々の`roles/`とは別）
 
 ## 主要ファイル
 
@@ -143,7 +151,7 @@ Commander と Observer は Claude Code の Skills 機構を活用します：
 ## ドキュメント
 
 ### 使い方
-- [使い方ガイド](docs/GUIDE.md) - 詳細な使用方法
+- [使い方ガイド](.multi-agent/docs/GUIDE.md) - 詳細な使用方法
 - [マルチセッションワークフロー](.multi-agent/docs/MULTI_SESSION_WORKFLOW.md) - 複数セッションでの運用
 - [Skills ガイド](.claude/skills/README.md) - Skills の使い方
 
@@ -153,7 +161,7 @@ Commander と Observer は Claude Code の Skills 機構を活用します：
 
 ### 参考
 - [テストレポート](.multi-agent/docs/TEST_REPORT.md) - validator.js 実装テスト結果
-- [移行ガイド](docs/MIGRATION.md) - ファイル構成の変更履歴
+- [移行ガイド](.multi-agent/docs/MIGRATION.md) - ファイル構成の変更履歴
 
 ## ライセンス
 

@@ -1,6 +1,11 @@
 ---
 name: python-quality-check
-description: Python コードの品質チェック（Gate2 評価で Observer が使用）
+description: |
+  Run quality checks on Python code. Invoke automatically after writing or modifying Python
+  files, before committing, or when asked to verify code quality.
+  Triggers: after implementing .py files, before git commit, "check quality", "run checks",
+  "verify implementation", Gate2 evaluation by Observer.
+  Checks: ruff format, ruff lint, mypy type checking, pytest (testing tasks only).
 disable-model-invocation: false
 user-invocable: true
 allowed-tools: [bash]

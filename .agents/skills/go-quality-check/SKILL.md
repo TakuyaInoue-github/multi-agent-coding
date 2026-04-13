@@ -1,6 +1,11 @@
 ---
 name: go-quality-check
-description: Go コードの品質チェック（Gate2 評価で Observer が使用）
+description: |
+  Run quality checks on Go code. Invoke automatically after writing or modifying Go files,
+  before committing, or when asked to verify code quality.
+  Triggers: after implementing .go files, before git commit, "check quality", "run checks",
+  "verify implementation", Gate2 evaluation by Observer.
+  Checks: gofmt format, go vet static analysis, go build, go test (testing tasks only).
 disable-model-invocation: false
 user-invocable: true
 allowed-tools: [bash]

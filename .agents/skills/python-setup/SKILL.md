@@ -1,6 +1,11 @@
 ---
 name: python-setup
-description: Python プロジェクトの初期セットアップタスクを生成（uv + Ruff 使用）
+description: |
+  Set up a Python project environment. Invoke automatically when starting a new Python project
+  or when the environment is not yet configured.
+  Triggers: "setup Python project", "initialize Python", "create Python environment",
+  missing pyproject.toml or .venv, first task in a Python project.
+  Sets up: uv, Python version pin, .venv, pyproject.toml, ruff, mypy, pytest.
 disable-model-invocation: false
 user-invocable: true
 allowed-tools: [editor, bash]
