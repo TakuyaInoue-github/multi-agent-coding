@@ -42,7 +42,11 @@ Worker が実装を委譲するため、Codex Plugin が必要です：
 
 ### 2. runtime/ を初期化
 
-`runtime/BOARD.md` と `runtime/CONTEXT.md` を作成します（`.multi-agent/docs/GUIDE.md` のセットアップ手順を参照）。
+```bash
+./scripts/setup.sh
+```
+
+ベースブランチ・言語・プロジェクト方針を対話形式で入力すると `runtime/` 以下のファイルが自動生成されます。
 
 ### 3. Claude Code を起動してタスクを依頼
 

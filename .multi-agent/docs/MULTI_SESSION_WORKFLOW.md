@@ -45,25 +45,11 @@ Worker が実装を委譲するため、Codex Plugin が必要です：
 
 ### 2. runtime/ の初期化（セッション開始時）
 
-`runtime/BOARD.md` と `runtime/CONTEXT.md` が存在しない場合は作成します：
-
-**runtime/BOARD.md**:
-```yaml
-session_id: session-001
-base_branch: develop
-base_branch_created_by: user
-started_at: YYYY-MM-DDTHH:MM:SS
-tasks: []
+```bash
+./scripts/setup.sh
 ```
 
-**runtime/CONTEXT.md**:
-```markdown
-## プロジェクト方針
-（ユーザーから受けた指示・全体目標）
-
-## 技術スタック
-language: Python  # または TypeScript / Go / Java
-```
+ベースブランチ・言語・プロジェクト方針を入力すると `runtime/` 以下のファイルが自動生成されます。既存ファイルがある場合（セッション再開時）は上書き確認が入ります。
 
 ---
 
