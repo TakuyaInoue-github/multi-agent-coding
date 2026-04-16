@@ -402,8 +402,48 @@ runtime/ ファイルを更新し、監査証跡を作成します。
 
 ---
 
+## 自律ループの手順（/loop モード）
+
+`/loop` で起動している場合、毎サイクルで以下を順に確認し、該当するアクションを実行する。該当がなければ何もしない。
+
+### チェック順序
+
+1. **DISCUSSION.md に未応答の fail 起票があるか**
+   - `runtime/DISCUSSION.md` を読み、自分（Commander）がまだ応答していない Observer 起票があれば対応する
+   - 受け入れ → spec.md を修正またはWorkerに再指示
+   - 反論 → DISCUSSION.md に根拠を記載
+   - `discussion_round_limit` 超過 → 上告してユーザーに通知し、ループを一時停止
+
+2. **Gate2 pass 済みでマージ未完了のタスクがあるか**
+   - `tasks/*/observer_review.md` の `gate: 2` かつ `verdict: pass` を確認
+   - BOARD.md の `status` が `completed` でなければマージを実行
+
+3. **result.md が存在するが commander_review.md がないタスクがあるか**
+   - `tasks/*/result.md` 存在 + `tasks/*/commander_review.md` 未存在 を確認
+   - 一次評価を実施して `commander_review.md` を作成
+
+4. **Gate1 pass 済みで approved になっていないタスクがあるか**
+   - `tasks/*/observer_review.md` の `gate: 1` かつ `verdict: pass` を確認
+   - BOARD.md の `status` が `approved` でなければ更新する（depends_on と input_artifacts を確認してから）
+
+5. **pending タスクで Gate1 評価待ちのものがあるか**
+   - Observer が自律的に評価するため、通常は何もしない
+   - ただし `observer_request` が必要な場合は BOARD.md に記載する
+
+6. **ユーザーから未処理の新規指示があるか**
+   - 新規タスクの指示があれば分解して spec.md を作成
+
+### ループ内での行動原則
+
+- 1サイクルで複数のアクションを実行してよい（バックログを一気に消化する）
+- 不確実な判断（depends_on の解釈など）はユーザーに確認してからループを再開する
+- `runtime/CONTEXT.md` は10サイクルに1回、またはタスク完了ごとに更新する
+
+---
+
 ## 関連ドキュメント
 
 - `.claude/skills/README.md` - Skills 一覧とベストプラクティス
 - `.multi-agent/config/RULEBOOK.md` - 評価基準
 - `.multi-agent/templates/task/` - タスクテンプレート
+- `.multi-agent/docs/MULTI_SESSION_WORKFLOW.md` - マルチセッション起動の全体設計

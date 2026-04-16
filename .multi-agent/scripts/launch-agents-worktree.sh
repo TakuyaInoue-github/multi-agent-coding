@@ -126,68 +126,55 @@ echo ""
 echo "Runtime files initialized."
 echo ""
 
-# 既存のセッションをクリーンアップ（オプション）
-read -p "Kill existing agent sessions? (y/N): " -n 1 -r
-echo
-if [[ $REPLY =~ ^[Yy]$ ]]; then
-    tmux kill-session -t commander 2>/dev/null || true
-    tmux kill-session -t observer 2>/dev/null || true
-    tmux kill-session -t worker-1 2>/dev/null || true
-    echo "Existing sessions killed."
-fi
+# 既存のセッションをクリーンアップ
+echo "Killing existing agent sessions (if any)..."
+tmux kill-session -t commander 2>/dev/null || true
+tmux kill-session -t observer 2>/dev/null || true
+tmux kill-session -t worker-1 2>/dev/null || true
 
 echo ""
 echo "Launching agents with worktrees..."
 echo ""
 
-# Note: claude --worktree は Claude Code の機能です
-# 実際のコマンドは claude のバージョンによって異なる可能性があります
+# /loop 起動プロンプト（各エージェント用）
+COMMANDER_LOOP_PROMPT='/loop 5m .multi-agent/roles/commander/CLAUDE.md を読んで自律ループを実行してください。runtime/BOARD.md と runtime/EVENTLOG.json を確認し、次に取るべきアクションがあれば実行してください。'
+OBSERVER_LOOP_PROMPT='/loop 5m .multi-agent/roles/observer/CLAUDE.md を読んで自律チェックを実行してください。未評価の spec.md と commander_review.md を探し、あれば評価を実施してください。'
+WORKER_LOOP_PROMPT='/loop 5m .multi-agent/roles/worker/CLAUDE.md を読んで自律ループを実行してください。BOARD.md で approved かつ .assigned が存在しないタスクを探し、あれば .assigned を作成して実装を開始してください。'
+
+# claude が入力待ち（❯ プロンプト）になるまで待機する関数
+wait_for_claude() {
+    local session=$1
+    local timeout=60
+    local elapsed=0
+    echo -n "  Waiting for claude to start in '$session'..."
+    while ! tmux capture-pane -t "$session" -p 2>/dev/null | grep -q "❯"; do
+        sleep 1
+        elapsed=$((elapsed + 1))
+        if [ "$elapsed" -ge "$timeout" ]; then
+            echo " timeout!"
+            return 1
+        fi
+    done
+    echo " ready."
+}
 
 # Commander セッション（メインブランチ）
 echo "[1/3] Starting Commander (main branch)..."
-tmux new-session -d -s commander -c "$PROJECT_DIR" \
-    "echo 'Commander Session (Main Branch)'; \
-     echo ''; \
-     echo 'System Prompt:'; \
-     cat .multi-agent/roles/commander/CLAUDE.md; \
-     echo ''; \
-     echo '---'; \
-     echo 'Ready to start. Commands:'; \
-     echo '  /decompose-task \"task description\" \"project-type\"'; \
-     echo '  /sync-status sync-board task-id '\''json'\'''; \
-     echo ''; \
-     read -p 'Press Enter to continue...'; \
-     claude"
+tmux new-session -d -s commander -c "$PROJECT_DIR" "claude"
+wait_for_claude commander
+tmux send-keys -t commander "$COMMANDER_LOOP_PROMPT" Enter
 
 # Observer セッション（独立したworktree）
 echo "[2/3] Starting Observer (worktree)..."
-tmux new-session -d -s observer -c "$PROJECT_DIR" \
-    "echo 'Observer Session (Worktree)'; \
-     echo ''; \
-     echo 'System Prompt:'; \
-     cat .multi-agent/roles/observer/CLAUDE.md; \
-     echo ''; \
-     echo '---'; \
-     echo 'Ready to start. Commands:'; \
-     echo '  /evaluate-gate 1 task-id spec_review'; \
-     echo '  /evaluate-gate 2 task-id result_review'; \
-     echo ''; \
-     read -p 'Press Enter to continue...'; \
-     claude"
+tmux new-session -d -s observer -c "$PROJECT_DIR" "claude"
+wait_for_claude observer
+tmux send-keys -t observer "$OBSERVER_LOOP_PROMPT" Enter
 
 # Worker セッション1（独立したworktree）
 echo "[3/3] Starting Worker-1 (worktree)..."
-tmux new-session -d -s worker-1 -c "$PROJECT_DIR" \
-    "echo 'Worker-1 Session (Worktree)'; \
-     echo ''; \
-     echo 'System Prompt:'; \
-     cat .multi-agent/roles/worker/CLAUDE.md; \
-     echo ''; \
-     echo '---'; \
-     echo 'Ready to start. Wait for spec.md from Commander.'; \
-     echo ''; \
-     read -p 'Press Enter to continue...'; \
-     claude"
+tmux new-session -d -s worker-1 -c "$PROJECT_DIR" "claude"
+wait_for_claude worker-1
+tmux send-keys -t worker-1 "$WORKER_LOOP_PROMPT" Enter
 
 echo ""
 echo "==================================="
@@ -209,10 +196,14 @@ echo "  Ctrl+B then D                      # Detach from session"
 echo "  tmux kill-session -t <name>        # Kill a specific session"
 echo ""
 echo "Workflow:"
-echo "  1. Commander: Decompose tasks, create spec.md"
-echo "  2. Observer: Automatically evaluates (Gate1)"
-echo "  3. Worker: Reads spec.md, executes, writes result.md"
-echo "  4. Commander: Reviews result.md"
-echo "  5. Observer: Evaluates result (Gate2)"
-echo "  6. Commander: Merges if pass"
+echo "  1. Commander: Decompose tasks, create spec.md  (/loop 自動実行中)"
+echo "  2. Observer: Gate1 評価                        (/loop 自動実行中)"
+echo "  3. Worker: 実装・result.md 作成               (/loop 自動実行中)"
+echo "  4. Commander: 一次評価・commander_review.md    (/loop 自動実行中)"
+echo "  5. Observer: Gate2 評価                        (/loop 自動実行中)"
+echo "  6. Commander: base_branch にマージ             (/loop 自動実行中)"
+echo ""
+echo "Note: 各セッションは /loop で自律動作しています。"
+echo "      ユーザーの介入が必要な場合は Commander セッションに通知が届きます。"
+echo "      新規タスクを指示する場合は: tmux attach-session -t commander"
 echo ""

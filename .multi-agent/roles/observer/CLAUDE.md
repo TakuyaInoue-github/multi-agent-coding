@@ -387,8 +387,42 @@ Observer は以下の Skills を使用できます：
 
 ---
 
+## 自律ループの手順（/loop モード）
+
+`/loop` で起動している場合、毎サイクルで以下を順に確認し、該当するアクションを実行する。該当がなければ何もしない。
+
+### チェック順序
+
+1. **タイムアウト検知**
+   - 各タスクの最新ファイルのタイムスタンプを確認し、BOARD.md の policy に従い閾値超過を検知する
+   - `worker_timeout`: `.assigned` 存在 + `result.md` 未作成 + `worker_timeout_hours` 経過
+     → `.assigned` を削除し EVENTLOG に `worker_timeout` を記録
+   - `commander_timeout`: Gate1/Gate2 fail 後 `commander_response_hours` 経過で DISCUSSION.md に応答なし
+     → EVENTLOG に `commander_timeout` を記録し、ユーザーに直接通知してループを一時停止
+
+2. **Gate2 評価待ちのタスクがあるか**
+   - `tasks/*/commander_review.md` 存在 + `observer_review.md(gate: 2)` 未作成 を確認
+   - 該当タスクの Gate2 評価を実施
+
+3. **Gate1 評価待ちのタスクがあるか**
+   - `tasks/*/spec.md` 存在 + `observer_review.md(gate: 1)` 未作成 を確認
+   - 該当タスクの Gate1 評価を実施
+
+4. **observer_request があるか**
+   - `runtime/BOARD.md` の `observer_request.task_id` が null でなければ要求された評価を実施
+   - 完了後 `observer_request` を null にリセット（Commander が行う）
+
+### ループ内での行動原則
+
+- 複数タスクが同時に評価待ちの場合、task-id の昇順で処理する
+- 評価中は他のチェックを中断してよい（1サイクル1評価を原則とする）
+- BOARD.md への直接書き込みは禁止。status 変更が必要な場合は EVENTLOG に記録し Commander に委ねる
+
+---
+
 ## 関連ドキュメント
 
 - `.claude/skills/README.md` - Skills 一覧とベストプラクティス
-- `.multi-agent/.multi-agent/config/RULEBOOK.md` - 評価基準（チェックリスト）
+- `.multi-agent/config/RULEBOOK.md` - 評価基準（チェックリスト）
 - `.claude/skills/gate-evaluation/checklists/` - 詳細なチェックリスト
+- `.multi-agent/docs/MULTI_SESSION_WORKFLOW.md` - マルチセッション起動の全体設計
