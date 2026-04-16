@@ -25,40 +25,11 @@ Worker    (Codex)        → 実装・テスト・デバッグ
 
 ## クイックスタート
 
-### 複数セッションでの起動（推奨）
+### 1. Codex Plugin のセットアップ（初回のみ）
 
-真のマルチエージェントシステムとして動作させるには、3つの独立したClaude Codeセッションを起動します：
-
-```bash
-# 自動起動スクリプトを使用
-./scripts/launch-agents-worktree.sh
-
-# セッションに接続
-tmux attach-session -t commander   # Commander
-tmux attach-session -t observer    # Observer
-tmux attach-session -t worker-1    # Worker
-
-# デタッチ: Ctrl+B then D
-```
-
-詳細は [docs/MULTI_SESSION_WORKFLOW.md](docs/MULTI_SESSION_WORKFLOW.md) を参照してください。
-
-### シングルセッションでの起動（開発・テスト用）
-
-1つのセッションで全エージェントをシミュレーション：
-
-1. `runtime/` ディレクトリの状態ファイルを確認
-2. Commander セッションを起動
-3. `.multi-agent/roles/commander/CLAUDE.md` をシステムプロンプトとして使用
-
-詳細は [.multi-agent/docs/GUIDE.md](.multi-agent/docs/GUIDE.md) を参照してください。
-
-### Codex Plugin のセットアップ（Worker のみ）
-
-Worker は実装タスクを **Codex に委譲**します。初回のみ以下のセットアップが必要です：
+Worker が実装を委譲するため、Codex Plugin が必要です：
 
 ```bash
-# Worker セッションで実行
 /plugin marketplace add openai/codex-plugin-cc
 /plugin install codex@openai-codex
 /reload-plugins
@@ -69,7 +40,26 @@ Worker は実装タスクを **Codex に委譲**します。初回のみ以下�
 - ChatGPT Plus サブスクリプション、または
 - OpenAI API キー（`export OPENAI_API_KEY="sk-..."`）
 
-詳細は [.multi-agent/docs/CODEX_SETUP.md](.multi-agent/docs/CODEX_SETUP.md) を参照してください。
+### 2. runtime/ を初期化
+
+```bash
+./scripts/setup.sh
+```
+
+ベースブランチ・言語・プロジェクト方針を対話形式で入力すると `runtime/` 以下のファイルが自動生成されます。
+
+### 3. Claude Code を起動してタスクを依頼
+
+```
+.multi-agent/roles/commander/CLAUDE.md を読んで、セッション開始手順に従ってください。
+今回のタスクは：（ユーザーの指示）
+```
+
+Commander → Observer（Gate1）→ Worker → Commander → Observer（Gate2）→ マージ の流れを**1セッション**で完結できます。
+
+詳細は [.multi-agent/docs/MULTI_SESSION_WORKFLOW.md](.multi-agent/docs/MULTI_SESSION_WORKFLOW.md) を参照してください。
+
+> **将来対応**: tmux を使った Commander / Observer / Worker の独立した複数セッション同時起動に対応予定です。
 
 ## ディレクトリ構造
 
@@ -140,19 +130,11 @@ Commander と Observer は Claude Code の Skills 機構を活用します：
 
 詳細は [.claude/skills/README.md](.claude/skills/README.md) を参照してください。
 
-## テスト方法
-
-マルチセッションシステムのテスト手順を記載する
-
-## テスト
-
-このシステムのテスト結果
-
 ## ドキュメント
 
 ### 使い方
-- [使い方ガイド](.multi-agent/docs/GUIDE.md) - 詳細な使用方法
-- [マルチセッションワークフロー](.multi-agent/docs/MULTI_SESSION_WORKFLOW.md) - 複数セッションでの運用
+- [使い方ガイド](.multi-agent/docs/GUIDE.md) - セットアップ・ファイル構成の詳細
+- [ワークフローガイド](.multi-agent/docs/MULTI_SESSION_WORKFLOW.md) - タスクの進め方
 - [Skills ガイド](.claude/skills/README.md) - Skills の使い方
 
 ### 開発

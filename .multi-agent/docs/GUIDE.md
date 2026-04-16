@@ -40,31 +40,23 @@ your-project/
 └── tasks/                             # タスク実行結果
 ```
 
-### 2. BOARD.md を初期設定する
+### 2. runtime/ を初期化する
 
-`runtime/BOARD.md` を作成（または更新）して以下を設定します：
+セットアップスクリプトを実行します：
 
-```yaml
-session_id: session-001
-base_branch: develop        # ユーザーが作業起点を指定
-base_branch_created_by: user
-started_at: 2026-04-01T10:00:00
+```bash
+./scripts/setup.sh
 ```
 
-`base_branch` はユーザーが事前に作成してから指定します。
-Commander がマージできるのはこのブランチまでです。
+ベースブランチ・言語・プロジェクト方針を対話形式で入力すると、以下のファイルが自動生成されます：
 
-### 3. CONTEXT.md にプロジェクト方針を書く
+- `runtime/BOARD.md` — タスク状態・依存グラフ・policy
+- `runtime/CONTEXT.md` — セッション引き継ぎ
+- `runtime/DISCUSSION.md` — 議論ログ
+- `runtime/SUMMARY.md` — 進捗サマリー
+- `runtime/EVENTLOG.json` — イベント記録
 
-`runtime/CONTEXT.md` に以下を記載します：
-
-```markdown
-## プロジェクト方針
-（ユーザーから受けた指示・全体目標）
-
-## 技術スタック
-language: Python  # または TypeScript / Go / Java
-```
+既存ファイルがある場合（セッション再開時）は上書き確認が入ります。
 
 ---
 
