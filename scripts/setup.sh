@@ -59,6 +59,13 @@ prompt language "使用言語 (Python / TypeScript / Go / Java)" "Python"
 # 3. project_goal
 prompt project_goal "プロジェクト方針・目標（1行）" "（未設定）"
 
+# 4. project_name
+default_name=$(basename "$PROJECT_ROOT")
+prompt project_name "プロジェクト名" "$default_name"
+
+# 5. dir_structure
+prompt dir_structure "主要ディレクトリ構成（例: src/ tests/ docs/）" "src/ tests/"
+
 # --- runtime/ ディレクトリ作成 -----------------------------------------------
 
 mkdir -p "$RUNTIME_DIR"
@@ -182,6 +189,41 @@ EOF
   echo_ok "runtime/EVENTLOG.json を作成しました"
 else
   echo_info "runtime/EVENTLOG.json をスキップしました"
+fi
+
+# --- CLAUDE.md (プロジェクトルート) -----------------------------------------
+
+CLAUDE_FILE="$PROJECT_ROOT/CLAUDE.md"
+if confirm_overwrite "$CLAUDE_FILE"; then
+  cat > "$CLAUDE_FILE" <<EOF
+# ${project_name}
+
+## プロジェクト概要
+${project_goal}
+
+## 技術スタック
+- 言語: ${language}
+- ベースブランチ: ${base_branch}
+
+## ディレクトリ構成
+\`\`\`
+${dir_structure}
+\`\`\`
+
+## コーディング規約・方針
+（プロジェクト固有の規約をここに追記してください）
+
+---
+
+## Multi-Agent フレームワーク
+
+このプロジェクトは Commander / Observer / Worker の3エージェント構成で開発を進めます。
+
+@.multi-agent/roles/commander/CLAUDE.md
+EOF
+  echo_ok "CLAUDE.md を作成しました"
+else
+  echo_info "CLAUDE.md をスキップしました"
 fi
 
 # --- 完了メッセージ ----------------------------------------------------------

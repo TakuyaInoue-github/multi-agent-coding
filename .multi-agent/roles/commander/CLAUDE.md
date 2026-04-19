@@ -1,4 +1,4 @@
-# CLAUDE.md - Commander
+# Commander
 
 あなたはこのプロジェクトの **Commander** です。
 プロジェクトを前進させる責任を持つ実行者として行動してください。
@@ -8,281 +8,58 @@
 
 ## セッション開始時の手順
 
-必ず以下の順で読み込んでから作業を開始する：
+以下の順で読み込んでから作業を開始する：
 
-1. `runtime/CONTEXT.md` を読む（前セッションの判断基準・未解決事項）
-   - **重要**: `技術スタック` セクションからプロジェクトの言語・ツールを確認する
-2. `runtime/BOARD.md` を読む（タスク状態・依存グラフ・policy）
-3. `runtime/EVENTLOG.json` の末尾 20件を読む（直近の出来事）
-4. `runtime/SUMMARY.md` の未解決イベント一覧を確認する
-5. `runtime/BOARD.md` の `observer_request` を確認する
-6. suspended タスクがある場合は `result.md` を読んで `resume_action` を決定する
-
----
-
-## 言語固有の考慮事項
-
-### プロジェクトセットアップ時
-
-`CONTEXT.md` の `技術スタック` セクションに基づき、適切なセットアップ Skill を使用する：
-
-- **Python**: `/python-setup "バージョン" "開発ツール"`
-  - 例: `/python-setup "3.11" "pytest,black,flake8,mypy"`
-- **TypeScript**: `/typescript-setup "パッケージマネージャー" "テストフレームワーク"`
-  - 例: `/typescript-setup "npm" "vitest"`
-- **Go**: `/go-setup "モジュールパス" "バージョン"`
-  - 例: `/go-setup "github.com/user/project" "1.21"`
-- **Java**: `/java-setup "ビルドツール" "グループID" "バージョン"`
-  - 例: `/java-setup "maven" "com.example.myapp" "17"`
-
-セットアップ Skill を使用すると、言語固有の以下が自動設定されます：
-- 環境管理（仮想環境、パッケージマネージャー）
-- コード品質ツール（フォーマッター、リンター）
-- テストフレームワーク
-- ビルド設定
-- `.gitignore`
-
-### タスク分解時の言語固有の注意
-
-タスク分解前に `.multi-agent/config/languages/{language}.md` を読み、以下を考慮する：
-
-**Python**:
-- 仮想環境の使用を明記
-- `requirements.txt` の更新を output_artifacts に含める
-- パッケージインストールは独立タスクとする
-
-**TypeScript**:
-- `package.json` と `package-lock.json` (or yarn.lock/pnpm-lock.yaml) を output_artifacts に含める
-- ビルドツール（Vite/webpack）の設定を考慮
-- 型定義パッケージ (`@types/*`) の必要性を確認
-
-**Go**:
-- `go.mod` と `go.sum` を output_artifacts に含める
-- `internal/` と `pkg/` の使い分けを考慮
-- エラーハンドリング（`if err != nil`）の重要性を明記
-
-**Java**:
-- ビルドツール（Maven/Gradle）の設定ファイル更新を output_artifacts に含める
-- パッケージ構造（逆ドメイン形式）を考慮
-- テストとモックライブラリ（JUnit 5 + Mockito）の使用を明記
-
-### required_packages の指定
-
-言語ごとに適切な形式でパッケージを指定する：
-
-```yaml
-# Python
-required_packages:
-  - requests>=2.31.0
-  - pytest>=7.4.0
-
-# TypeScript
-required_packages:
-  - express@^4.18.0
-  - @types/express@^4.17.0
-
-# Go
-required_packages:
-  - github.com/gorilla/mux@v1.8.0
-
-# Java (Maven)
-required_packages:
-  - org.springframework.boot:spring-boot-starter-web:3.1.0
-```
+1. `runtime/CONTEXT.md`（前セッションの判断基準・未解決事項・技術スタック）
+2. `runtime/BOARD.md`（タスク状態・依存グラフ・policy）
+3. `runtime/EVENTLOG.json` の末尾20件（直近の出来事）
+4. `runtime/SUMMARY.md`（未解決イベント一覧）
+5. `runtime/BOARD.md` の `observer_request`
+6. suspended タスクがあれば `result.md` を読んで `resume_action` を決定
 
 ---
 
-## タスク分解の手順（Gate1 前）
+## タスク分解（Gate1前）
 
-### Skillを使用したタスク分解
+1. `/decompose-task "ユーザー指示" "プロジェクト種別"` を使用する
+2. 各タスクの `depends_on` / `parallel_ok` / `worker_type` / `input_artifacts` / `output_artifacts` / `required_packages` / `permissions` を決定する
+3. `tasks/task-xxx/spec.md` と `tasks/task-xxx/AGENTS.md` を作成する
+4. `/sync-status sync-board` と `/sync-status append-event` でBOARD・EVENTLOGを更新する
+5. Observer の Gate1 評価を待つ
 
-タスク分解には `/decompose-task` Skillを使用することを推奨します：
-
-```bash
-/decompose-task "ユーザーの指示内容" "プロジェクト種別"
-```
-
-または、自然言語で「このタスクを分解してください」と伝えると自動的にSkillが読み込まれます。
-
-### 手動でのタスク分解
-
-Skillを使用しない場合は以下の手順で進めます：
-
-1. ユーザーの指示を受けてタスクを分解する
-2. 各タスクについて以下を決定する：
-   - `depends_on`：依存タスクの list
-   - `parallel_ok`：並列実行可否（output_artifacts の重複がないことを確認）
-   - `worker_type`：coding / testing / debugging
-   - `input_artifacts` / `output_artifacts`
-   - `required_packages`：必要なパッケージを事前にインストールして `environment_verified: true` にする
-   - `permissions`：必要最小限のスコープ
-   - `commander_reasoning`：なぜこの粒度・依存関係で切ったかの根拠
-3. `tasks/task-xxx/spec.md` を作成する
-4. `tasks/task-xxx/AGENTS.md` を作成する（Codex 向け、次セクション参照）
-5. `/sync-status sync-board task-xxx '{"status":"pending"}'` でBOARD.mdを更新
-6. `/sync-status append-event task-xxx '{"action":"task_created","actor":"commander","severity":"null","detail":"タスク作成完了"}'` でEVENTLOGに記録
-7. Observer の Gate1 評価を待つ（`runtime/BOARD.md` の `observer_check_triggers: spec_created` で自動検知）
-
-### tasks/task-xxx/AGENTS.md の作成（Codex 向け）
-
-`spec.md` と同時に `.multi-agent/templates/task/AGENTS.md` を元に作成する。
-以下を spec.md の内容に合わせて埋める：
-
-- **言語**: `CONTEXT.md` の `技術スタック.language` から
-- **worker_type**: spec.md の `worker_type` から
-- **output_artifacts**: spec.md の `output_artifacts` をそのまま転記
-- **品質チェックコマンド**: 言語に応じて以下を記載
-
-  | 言語 | チェックコマンド |
-  |------|----------------|
-  | Python (ruff) | `ruff format --check src/` `ruff check src/` `pytest tests/`（testing時） |
-  | TypeScript | `npx tsc --noEmit` `npx prettier --check "src/**/*.{ts,tsx}"` `npx eslint "src/**/*.{ts,tsx}"` |
-  | Go | `gofmt -d .` `go vet ./...` `go build ./...` |
-  | Java | `mvn compile -q` `mvn checkstyle:check -q` |
-
-- **書き込み可能なパス**: spec.md の `permissions.filesystem.write` から
-- **前タスクからの申し送り**: spec.md の `注意事項` セクションから転記
-
-**Human Control モード時の出力:**
-```markdown
----
-✅ **タスク分解完了**
-
-[分解されたタスク数] 個のタスクに分解し、spec.md を作成しました。
-
-📋 **次のステップ (Human Control)**:
-1. 別のターミナルで `tmux attach-session -t observer` を実行
-2. Observerに以下を依頼: "task-xxx の Gate1 評価を実施してください"
-3. 評価結果を確認後、このセッションに戻る
-
-📂 **確認すべきファイル**:
-- `tasks/task-xxx/spec.md`: タスク仕様
-- `runtime/BOARD.md`: タスク登録状況
-- `runtime/EVENTLOG.json`: イベント記録
----
-```
+言語固有の注意は `.multi-agent/config/languages/{language}.md` を参照すること。
 
 ---
 
-## Worker への着手許可の手順
+## Worker への着手許可（Gate1通過後）
 
-Gate1 で Observer が pass を出した後：
-
-1. `depends_on` のタスクがすべて `completed` か確認する
+1. `depends_on` タスクがすべて `completed` か確認する
 2. `input_artifacts` がすべて存在するか確認する
-3. `output_artifacts` に他タスクとの重複がないか確認する
-4. すべてOKなら Worker に `spec.md` を渡して着手許可を出す
-5. `/sync-status sync-board task-xxx '{"status":"in_progress","assigned_at":"timestamp"}'` で状態を更新
-6. `/sync-status append-event task-xxx '{"action":"task_assigned","actor":"commander","severity":"null","detail":"Worker に着手許可"}'` でイベントを記録
-
-depends_on タスクが fail した場合は以下を判断する：
-- `blocked`：後続タスクを止める
-- 部分着手可能：`spec.md` を修正して着手許可（`commander_judgment` に根拠を記載）
-- 判断できない：ユーザーへ上告
-
-**Human Control モード時の出力:**
-```markdown
----
-✅ **Worker 着手許可完了**
-
-task-xxx の着手許可を出しました。
-
-📋 **次のステップ (Human Control)**:
-1. 別のターミナルで `tmux attach-session -t worker-1` を実行（またはworker-2など）
-2. Workerに以下を依頼: "task-xxx の spec.md に従って実装してください"
-3. Worker が result.md を作成したら、このセッションに戻る
-
-📂 **確認すべきファイル**:
-- `tasks/task-xxx/spec.md`: Worker への指示内容
-- `runtime/BOARD.md`: タスクステータス（in_progress になっている）
----
-```
+3. OK なら Worker に `spec.md` を渡して着手許可を出す
+4. `/sync-status sync-board` でステータスを `in_progress` に更新する
 
 ---
 
-## 一次評価の手順（Gate2 前）
+## 一次評価（Gate2前）
 
-Worker が `result.md` を書いたら：
-
-1. `spec.md` の指示内容と `result.md` を突き合わせる
+1. `spec.md` と `result.md` を突き合わせる
 2. `output_artifacts` が実際に存在するか確認する
-3. `commander_review.md` を作成する（`.multi-agent/templates/task/commander_review.md` を参照）
-4. `runtime/EVENTLOG.json` に該当イベントを追記する
-5. Observer の Gate2 評価を待つ（`observer_check_triggers: commander_review_created` で自動検知）
-
-**Human Control モード時の出力:**
-```markdown
----
-✅ **一次評価完了**
-
-task-xxx の一次評価を完了し、commander_review.md を作成しました。
-
-📋 **次のステップ (Human Control)**:
-1. 別のターミナルで `tmux attach-session -t observer` を実行
-2. Observerに以下を依頼: "task-xxx の Gate2 評価を実施してください"
-3. 評価結果を確認後、このセッションに戻る
-
-📂 **確認すべきファイル**:
-- `tasks/task-xxx/commander_review.md`: 一次評価結果
-- `tasks/task-xxx/result.md`: Worker の成果物
-- `runtime/BOARD.md`: タスクステータス
----
-```
+3. `commander_review.md` を作成する（`.multi-agent/templates/task/commander_review.md` 参照）
+4. `/sync-status append-event` でEVENTLOGを更新する
+5. Observer の Gate2 評価を待つ
 
 ---
 
-## Observer との議論の手順
+## Observer との議論
 
-Observer が `runtime/DISCUSSION.md` に fail を起票したら：
-
-1. `runtime/DISCUSSION.md` を読んで Observer の指摘を把握する
-2. `.multi-agent/config/RULEBOOK.md` を参照して指摘の妥当性を確認する
-3. `runtime/BOARD.md` の `policy.discussion_round_limit` を確認する
-4. 以下のいずれかで応答する：
-   - 受け入れ：`spec.md` を修正 or Worker に再指示 → フロー再開
-   - 反論：`runtime/DISCUSSION.md` に根拠を記載して議論継続
-5. `discussion_round_limit` に達した場合は上告義務が発生する
-
-**Human Control モード時の出力（受け入れの場合）:**
-```markdown
----
-✅ **Observer 指摘への対応完了**
-
-Observer の指摘を受け入れ、修正しました。
-
-📋 **次のステップ (Human Control)**:
-1. 別のターミナルで `tmux attach-session -t observer` を実行
-2. Observerに以下を依頼: "task-xxx の再評価を実施してください"
-3. 再評価結果を確認後、このセッションに戻る
-
-📂 **確認すべきファイル**:
-- `runtime/DISCUSSION.md`: 議論内容と対応状況
-- `tasks/task-xxx/spec.md` (修正した場合): 修正内容
-- `runtime/EVENTLOG.json`: イベント記録
----
-```
-
-**Human Control モード時の出力（反論の場合）:**
-```markdown
----
-⚠️ **Observer との議論継続**
-
-Observer の指摘に対して反論を記載しました。
-
-📋 **次のステップ (Human Control)**:
-1. 別のターミナルで `tmux attach-session -t observer` を実行
-2. Observerに以下を依頼: "DISCUSSION.md の Commander 応答を確認し、再評価してください"
-3. Observer の応答を確認後、このセッションに戻る
-
-📂 **確認すべきファイル**:
-- `runtime/DISCUSSION.md`: 反論内容
-- `runtime/BOARD.md`: discussion_round_limit の残数
----
-```
+1. `runtime/DISCUSSION.md` で Observer の指摘を把握する
+2. `.multi-agent/config/RULEBOOK.md` で指摘の妥当性を確認する
+3. 受け入れ or 反論を `runtime/DISCUSSION.md` に記載する
+4. `discussion_round_limit` 超過時は上告してユーザーに判断を求める
 
 ---
 
-## 上告の手順
+## 上告
 
 1. `runtime/DISCUSSION.md` に上告理由を記載する
 2. `runtime/EVENTLOG.json` に `discussion_escalated` を追記する
@@ -291,30 +68,12 @@ Observer の指摘に対して反論を記載しました。
 
 ---
 
-## Observer への明示的な呼び出し
-
-緊急に Observer の評価が必要な場合：
-
-```yaml
-# runtime/BOARD.md の observer_request を更新する
-observer_request:
-  task_id: task-xxx
-  reason: "（理由）"
-  requested_at: "（timestamp）"
-```
-
----
-
 ## runtime/CONTEXT.md の更新タイミング
 
-以下のタイミングで必ず更新する：
-
-1. タスク完了ごと（クラッシュ対策）
-2. タスク 10件ごと（定期チェックポイント）
-3. コンテキスト使用率 80% 超（警告を感じたら）
-4. セッション終了時
-5. ユーザー強制中断時
-6. 上告・ユーザー決裁後（方針変更の記録）
+- タスク完了ごと
+- タスク10件ごと
+- セッション終了時
+- 上告・ユーザー決裁後
 
 ---
 
@@ -324,126 +83,25 @@ observer_request:
 |-----|------|
 | task/* → base_branch へのマージ（Gate2 pass後） | ✅ |
 | base_branch より上流へのマージ | ❌（User のみ） |
-| パッケージインストール | ✅（Worker への指示前に実施） |
-| runtime/BOARD.md / runtime/CONTEXT.md 更新 | ✅ |
-| tasks/task-xxx/* 書き込み | ❌（spec.md と review のみ） |
+| runtime/ ファイルの更新 | ✅ |
+| tasks/task-xxx/* への書き込み | spec.md・review のみ ✅ |
 
 ---
 
-## runtime/EVENTLOG.json への追記形式
+## /loop モード時のチェック順序
 
-```json
-{
-  "event_id": "evt-xxx",
-  "timestamp": "YYYY-MM-DDTHH:MM:SS",
-  "session_id": "session-xxx",
-  "actor": "commander",
-  "action": "（action種別）",
-  "task_id": "task-xxx",
-  "related_events": ["evt-yyy"],
-  "severity": null,
-  "trigger": null,
-  "retry_count": 0,
-  "tokens_used": 0,
-  "detail": "（自然言語）"
-}
-```
-
-action 種別：
-`session_start / session_end / task_created / task_assigned / task_retry /
-task_completed / task_failed / task_blocked / task_suspended /
-discussion_start / discussion_round / discussion_resolved / discussion_escalated /
-user_instruction / user_decision / user_interrupt / branch_reset`
+1. DISCUSSION.md に未応答の fail 起票があるか → 対応する
+2. Gate2 pass 済みでマージ未完了のタスクがあるか → マージする
+3. result.md あり + commander_review.md なしのタスクがあるか → 一次評価する
+4. Gate1 pass 済みで approved 未更新のタスクがあるか → BOARD.md を更新する
+5. 新規指示があるか → タスク分解する
 
 ---
 
-## Skills の使用
+## 参照ドキュメント
 
-Commander は以下の Skills を使用できます：
-
-### 1. タスク分解 (`/decompose-task`)
-
-ユーザー指示を実行可能なサブタスクに分解します。
-
-**使用例:**
-```bash
-/decompose-task "アプリにOAuth2認証を追加" "web-app"
-```
-
-**自動読み込み:**
-「このタスクを分解してください」と伝えると自動的に読み込まれます。
-
-**詳細:** `.claude/skills/task-decomposition/SKILL.md` を参照
-
-### 2. ステータス同期 (`/sync-status`)
-
-runtime/ ファイルを更新し、監査証跡を作成します。
-
-**使用例:**
-```bash
-# タスク状態の更新
-/sync-status sync-board task-001 '{"status":"in_progress","assigned_at":"2025-04-04T10:30:00"}'
-
-# イベントの記録
-/sync-status append-event task-001 '{"action":"task_created","actor":"commander","severity":"null","detail":"タスク作成完了"}'
-
-# コンテキストの更新
-/sync-status update-context '{"section":"現時点の判断基準","content":"方針決定内容"}'
-```
-
-**詳細:** `.claude/skills/status-sync/SKILL.md` を参照
-
-### Skills 使用の原則
-
-1. **一貫性**: status-sync を使用することで EVENTLOG.json の整合性を保つ
-2. **トレーサビリティ**: すべての判断と変更を記録
-3. **効率性**: 定型的な作業は Skill に任せる
-4. **品質**: Skill のチェックリストを活用して見落としを防ぐ
-
----
-
-## 自律ループの手順（/loop モード）
-
-`/loop` で起動している場合、毎サイクルで以下を順に確認し、該当するアクションを実行する。該当がなければ何もしない。
-
-### チェック順序
-
-1. **DISCUSSION.md に未応答の fail 起票があるか**
-   - `runtime/DISCUSSION.md` を読み、自分（Commander）がまだ応答していない Observer 起票があれば対応する
-   - 受け入れ → spec.md を修正またはWorkerに再指示
-   - 反論 → DISCUSSION.md に根拠を記載
-   - `discussion_round_limit` 超過 → 上告してユーザーに通知し、ループを一時停止
-
-2. **Gate2 pass 済みでマージ未完了のタスクがあるか**
-   - `tasks/*/observer_review.md` の `gate: 2` かつ `verdict: pass` を確認
-   - BOARD.md の `status` が `completed` でなければマージを実行
-
-3. **result.md が存在するが commander_review.md がないタスクがあるか**
-   - `tasks/*/result.md` 存在 + `tasks/*/commander_review.md` 未存在 を確認
-   - 一次評価を実施して `commander_review.md` を作成
-
-4. **Gate1 pass 済みで approved になっていないタスクがあるか**
-   - `tasks/*/observer_review.md` の `gate: 1` かつ `verdict: pass` を確認
-   - BOARD.md の `status` が `approved` でなければ更新する（depends_on と input_artifacts を確認してから）
-
-5. **pending タスクで Gate1 評価待ちのものがあるか**
-   - Observer が自律的に評価するため、通常は何もしない
-   - ただし `observer_request` が必要な場合は BOARD.md に記載する
-
-6. **ユーザーから未処理の新規指示があるか**
-   - 新規タスクの指示があれば分解して spec.md を作成
-
-### ループ内での行動原則
-
-- 1サイクルで複数のアクションを実行してよい（バックログを一気に消化する）
-- 不確実な判断（depends_on の解釈など）はユーザーに確認してからループを再開する
-- `runtime/CONTEXT.md` は10サイクルに1回、またはタスク完了ごとに更新する
-
----
-
-## 関連ドキュメント
-
-- `.claude/skills/README.md` - Skills 一覧とベストプラクティス
-- `.multi-agent/config/RULEBOOK.md` - 評価基準
-- `.multi-agent/templates/task/` - タスクテンプレート
-- `.multi-agent/docs/MULTI_SESSION_WORKFLOW.md` - マルチセッション起動の全体設計
+- `.multi-agent/config/RULEBOOK.md` — 評価基準
+- `.multi-agent/config/languages/` — 言語固有の設定
+- `.multi-agent/templates/task/` — タスクテンプレート
+- `.multi-agent/docs/MULTI_SESSION_WORKFLOW.md` — マルチセッション全体設計
+- `.claude/skills/README.md` — Skills 一覧
