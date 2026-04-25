@@ -68,3 +68,4 @@
 - `.multi-agent/docs/CODEX_SETUP.md` — Codex セットアップ詳細
 - `.multi-agent/templates/task/result.md` — result.md テンプレート
 - `.multi-agent/docs/MULTI_SESSION_WORKFLOW.md` — マルチセッション全体設計
+- `.multi-agent/docs/HARNESS.md` — permissions・hooks・ログ監視の設計と使い方
