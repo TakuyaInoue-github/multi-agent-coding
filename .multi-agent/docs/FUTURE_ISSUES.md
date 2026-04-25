@@ -111,6 +111,53 @@ worktree 別起動が実現すれば各 worktree に独立した `settings.local
 
 ---
 
+## Issue 5: Worker の段階的起動（Commander による自律起動）
+
+### 現状
+
+`launch-agents-worktree.sh` を実行すると Commander / Observer / Worker が同時に起動する。
+タスクが存在しない状態でも Worker が起動し、空ループが回り続ける。
+
+### 問題
+
+- Worker がタスクなしで空ループし、リソースを無駄に消費する
+- 状態遷移が見えにくい（全員同時起動なのでシステムの動きが追いにくい）
+- Worker を後から追加したいときの手順がない
+
+### 目標とする状態遷移
+
+```
+Phase 1（ユーザーが手動起動）
+  Commander + Observer を起動
+  → Commander が /loop でタスクを監視
+  → Observer が /loop で spec.md / commander_review.md を監視
+
+Phase 2（Commander が自律起動）
+  approved タスクを検知したとき
+  → bash .multi-agent/scripts/launch-worker.sh worker-N を実行
+  → Worker が /loop で実装を開始
+  → result.md 作成・完了後に Worker セッションを終了
+```
+
+### 解決の方向性
+
+1. **スクリプトを分割する**
+   ```
+   .multi-agent/scripts/
+     launch-agents.sh    ← Phase 1: Commander + Observer 起動（ユーザーが実行）
+     launch-worker.sh    ← Phase 2: Worker 起動（Commander が自律実行）
+     stop-worker.sh      ← Worker 終了（Commander が自律実行）
+   ```
+
+2. **Commander の CLAUDE.md にルールを追加**
+   - `approved` タスクを検知したら `bash .multi-agent/scripts/launch-worker.sh worker-1` を実行
+   - Worker の完了（result.md 作成）を検知したら `stop-worker.sh` を実行
+
+3. **グローバル settings は変更不要**
+   - `Bash(bash .multi-agent/scripts/*)` はすでに allow 済み
+
+---
+
 ## 優先度マトリクス
 
 | Issue | 影響度 | 実装コスト | 優先度 |
@@ -119,6 +166,7 @@ worktree 別起動が実現すれば各 worktree に独立した `settings.local
 | Issue 2: worktree 自動化 | 中 | 低（allow 追加） | 高 |
 | Issue 3: runtime アクセス制御 | 高 | 高（Issue 1 依存） | 中 |
 | Issue 4: settings.local.json 競合 | 低 | 高（Issue 1 依存） | 低 |
+| Issue 5: Worker の段階的起動 | 中 | 低（スクリプト追加） | 高 |
 
 ---
 
