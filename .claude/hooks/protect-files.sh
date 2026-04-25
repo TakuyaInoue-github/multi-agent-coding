@@ -17,7 +17,7 @@ case "$path" in
     echo "Blocked by protect-files.sh: direct .git modification is not allowed: $path" >&2
     exit 2
     ;;
-  */.claude/settings.json|.claude/settings.json)
+  .claude/settings.json)
     echo "Blocked by protect-files.sh: settings.json requires manual edit: $path" >&2
     exit 2
     ;;
