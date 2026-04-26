@@ -139,7 +139,7 @@ Gate1評価基準は `.multi-agent/config/RULEBOOK.md` を参照。
 
 ## テンプレート参照
 
-`.multi-agent/templates/task-spec.md` から `tasks/task-xxx/spec.md` を作成する際の変換マッピング：
+`.multi-agent/templates/task/spec.md` から `tasks/task-xxx/spec.md` を作成する際の変換マッピング：
 
 - `decomposition.tasks[].task_id` → `spec.md` の `task_id`
 - `decomposition.tasks[].permissions` → `spec.md` の `permissions`

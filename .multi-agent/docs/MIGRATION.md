@@ -21,7 +21,7 @@
 
 | 旧パス | 新パス |
 |-------|-------|
-| `RULEBOOK.md` | `.multi-agent/.multi-agent/config/RULEBOOK.md` |
+| `RULEBOOK.md` | `.multi-agent/config/RULEBOOK.md` |
 
 ### テンプレートファイル
 
@@ -54,26 +54,55 @@
 ```
 multi-agent/
 ├── README.md                        # プロジェクト概要（シンプル版）
-├── .gitignore                       # 新規作成
+├── AGENTS.md                        # Codex向けプロジェクト共通設定
+├── .gitignore
 │
-├── agents/                          # エージェント定義
-│   ├── commander/
-│   │   └── CLAUDE.md
-│   ├── observer/
-│   │   └── CLAUDE.md
-│   └── worker/
-│       └── CLAUDE.md
+├── .claude/                         # Claude Code Skills（Commander/Observer用）
+│   └── skills/
+│       ├── task-decomposition/
+│       ├── gate-evaluation/
+│       ├── status-sync/
+│       ├── code-reading/
+│       ├── code-review/
+│       ├── python-setup/
+│       ├── python-quality-check/
+│       ├── typescript-setup/
+│       ├── typescript-quality-check/
+│       ├── go-setup/
+│       ├── go-quality-check/
+│       ├── java-setup/
+│       └── java-quality-check/
 │
-├── config/                          # 設定・ルール
-│   └── RULEBOOK.md
+├── .agents/                         # Codex向けSkills（Worker用）
+│   └── skills/
+│       ├── python-setup/
+│       ├── python-quality-check/
+│       ├── typescript-setup/
+│       ├── typescript-quality-check/
+│       ├── go-setup/
+│       ├── go-quality-check/
+│       ├── java-setup/
+│       └── java-quality-check/
 │
-├── templates/                       # テンプレート
-│   ├── task/
-│   │   ├── spec.md
-│   │   ├── result.md
-│   │   ├── commander_review.md
-│   │   └── observer_review.md
-│   └── session/                     # 将来の拡張用
+├── .multi-agent/                    # Multi-Agentフレームワーク
+│   ├── roles/                       # エージェント定義
+│   │   ├── commander/CLAUDE.md
+│   │   ├── observer/CLAUDE.md
+│   │   └── worker/CLAUDE.md
+│   ├── config/                      # 設定・ルール
+│   │   ├── RULEBOOK.md
+│   │   └── languages/
+│   ├── templates/                   # テンプレート
+│   │   └── task/
+│   │       ├── spec.md
+│   │       ├── AGENTS.md
+│   │       ├── result.md
+│   │       ├── commander_review.md
+│   │       └── observer_review.md
+│   └── docs/                        # ドキュメント
+│       ├── GUIDE.md
+│       ├── MIGRATION.md
+│       └── ...
 │
 ├── runtime/                         # ランタイム状態
 │   ├── BOARD.md
@@ -82,18 +111,13 @@ multi-agent/
 │   ├── SUMMARY.md
 │   └── EVENTLOG.json
 │
-├── docs/                            # ドキュメント
-│   ├── GUIDE.md                     # 詳細な使い方ガイド
-│   └── MIGRATION.md                 # このファイル
-│
-├── tasks/                           # タスク実行結果
-│   └── task-xxx/
-│
-├── archive/                         # アーカイブ
-├── improvement/                     # 改善文書
-└── skills/                          # Skills（将来追加予定）
-    ├── claude-code/
-    └── codex/
+└── tasks/                           # タスク実行結果
+    └── task-xxx/
+        ├── spec.md
+        ├── AGENTS.md
+        ├── result.md
+        ├── commander_review.md
+        └── observer_review.md
 ```
 
 ## パス参照の更新
@@ -105,7 +129,7 @@ multi-agent/
 - `DISCUSSION.md` → `runtime/DISCUSSION.md`
 - `SUMMARY.md` → `runtime/SUMMARY.md`
 - `EVENTLOG.json` → `runtime/EVENTLOG.json`
-- `RULEBOOK.md` → `.multi-agent/.multi-agent/config/RULEBOOK.md`
+- `RULEBOOK.md` → `.multi-agent/config/RULEBOOK.md`
 - `tasks/spec_template.md` → `.multi-agent/templates/task/spec.md`
 - `tasks/result_template.md` → `.multi-agent/templates/task/result.md`
 - `tasks/commander_review_template.md` → `.multi-agent/templates/task/commander_review.md`
@@ -172,7 +196,6 @@ A: `tasks/` ディレクトリではなく `.multi-agent/templates/task/` ディ
 
 - [プロジェクト概要](../README.md)
 - [使い方ガイド](GUIDE.md)
-- [改善計画](../improvement/IMPROVEMENT_PLAN.md)
 
 ## 履歴
 

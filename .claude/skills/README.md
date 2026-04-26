@@ -1,60 +1,48 @@
 # Multi-Agent System Skills
 
-マルチエージェントシステム（Commander / Observer / Worker）で使用するSkillsです。
+Commander / Observer / Worker が使用するSkillsです。
+
+**設計方針**: CLAUDE.mdには役割・権限ルールのみを定義し、「どうやるか」の手順はすべてSkillに集約しています。
+
+---
 
 ## Skill一覧
 
-| Skill | 目的 | 対象エージェント | 呼び出し方 |
-|-------|------|---------------|-----------|
-| `decompose-task` | ユーザー指示をサブタスクに分解 | Commander | `/decompose-task "指示内容" "プロジェクト種別"` |
-| `evaluate-gate` | spec/result の品質評価 | Observer | `/evaluate-gate 1 task-id spec_review` |
-| `status-sync` | ランタイムファイルの更新 | Commander | `/sync-status action task-id details` |
+### Commander 用
 
-## Skillsの配置
+| Skill | 目的 | 呼び出し方 |
+|-------|------|----------|
+| `decompose-task` | ユーザー指示をサブタスクに分解 | `/decompose-task "指示内容"` |
+| `assign-worker` | Gate1通過タスクをWorkerに割り当て | `/assign-worker task-xxx` |
+| `review-result` | Workerの成果物を一次評価 | `/review-result task-xxx` |
+| `handle-discussion` | ObserverのDISCUSSION起票に応答 | `/handle-discussion task-xxx` |
+| `sync-status` | BOARD・EVENTLOGの更新 | `/sync-status action task-xxx details` |
 
-Skillsは `.claude/skills/` に配置され、Claude Codeによって自動的に検出されます。
+### Observer 用
 
-### 手動呼び出し
+| Skill | 目的 | 呼び出し方 |
+|-------|------|----------|
+| `evaluate-gate` | spec/result の品質評価（Gate1/Gate2） | `/evaluate-gate 1 task-xxx spec_review` |
+| `sync-status` | EVENTLOGの記録（append-event のみ） | `/sync-status append-event task-xxx details` |
 
-```bash
-/decompose-task "認証機能を追加" "web-app"
-/evaluate-gate 1 task-001 spec_review
-/sync-status sync-board task-001 '{"status":"completed"}'
-```
+### Worker 用
 
-### 自動呼び出し
+| Skill | 目的 | 呼び出し方 |
+|-------|------|----------|
+| `start-task` | 事前確認・ブランチ作成・Codex委譲 | `/start-task task-xxx` |
 
-必要な内容を伝えると、Claudeが自動的に適切なSkillを読み込みます：
-- 「このタスクを分解してください」 → `/decompose-task` を自動読み込み
-- 「Gate1評価をしてください」 → `/evaluate-gate` を自動読み込み
+### 汎用（全エージェント）
 
-## ベストプラクティス
+| Skill | 目的 | 呼び出し方 |
+|-------|------|----------|
+| `code-reading` | コードの理解・読解 | `/code-reading "対象ファイル"` |
+| `code-review` | コードレビュー | `/code-review "対象ファイル"` |
 
-1. `/sync-status` を使用してEVENTLOG.jsonの整合性を保つ
-2. 判断前に `runtime/BOARD.md` を参照
-3. 実際の使用例は各Skillの `examples/` を参照
-4. SKILL.mdの指示は明確かつ簡潔に保つ
-
-## ディレクトリ構造
-
-```
-.claude/skills/
-├── README.md（このファイル）
-├── task-decomposition/
-│   ├── SKILL.md
-│   ├── .multi-agent/templates/
-│   └── examples/
-├── gate-evaluation/
-│   ├── SKILL.md
-│   ├── checklists/
-│   └── examples/
-└── status-sync/
-    └── SKILL.md
-```
+---
 
 ## 関連ドキュメント
 
-- [.multi-agent/roles/commander/CLAUDE.md](../../.multi-agent/roles/commander/CLAUDE.md) - Commander用プロンプト（Skillsの使い方を含む）
-- [.multi-agent/roles/observer/CLAUDE.md](../../.multi-agent/roles/observer/CLAUDE.md) - Observer用プロンプト（Skillsの使い方を含む）
-- [.multi-agent/config/RULEBOOK.md](../../.multi-agent/config/RULEBOOK.md) - 評価基準
-- [.multi-agent/templates/task/](../../.multi-agent/templates/task/) - タスクテンプレート
+- `.multi-agent/roles/commander/CLAUDE.md` — Commanderの役割・権限
+- `.multi-agent/roles/observer/CLAUDE.md` — Observerの役割・権限
+- `.multi-agent/roles/worker/CLAUDE.md` — Workerの役割・権限
+- `.multi-agent/config/RULEBOOK.md` — 評価基準

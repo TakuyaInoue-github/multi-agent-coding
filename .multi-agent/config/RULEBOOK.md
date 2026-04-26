@@ -98,6 +98,94 @@ DISCUSSION を起票するのは verdict が fail の場合のみ。
 
 ---
 
+## 言語固有評価基準（Gate2）
+
+Gate2 評価時は、プロジェクトの言語に応じて以下の基準を適用する。
+`CONTEXT.md` の `技術スタック.language` を参照すること。
+
+### Python
+
+#### 必須項目 (severity: critical)
+
+**モダンツールチェーン（2025年推奨: Ruff + uv）**:
+- [ ] `ruff format --check` でフォーマット確認が通過
+- [ ] `ruff check` で警告・エラーなし
+- [ ] 仮想環境が使用されている（`.venv/` 存在）
+- [ ] `pyproject.toml` が存在し、依存関係が記載されている
+
+**従来のツールチェーン（後方互換性: black + flake8）**:
+- [ ] `black --check` でフォーマット確認が通過
+- [ ] `flake8` で警告・エラーなし
+- [ ] 仮想環境が使用されている（`venv/` または `.venv/` 存在）
+- [ ] `requirements.txt` が存在し、依存関係が記載されている
+
+**注**: モダンツールチェーンは `pyproject.toml` に `[tool.ruff]` があるかで判定
+
+#### 推奨項目 (severity: major)
+
+- [ ] `mypy` または `pyright` で型エラーなし（型ヒントが使われている場合）
+- [ ] `pytest` でテストがすべて通過（テストタスクの場合）
+- [ ] カバレッジが 80% 以上（テストタスクの場合）
+- [ ] `__init__.py` が適切に配置されている
+- [ ] docstring が主要な関数・クラスに存在する
+- [ ] `uv.lock` が存在し、依存関係が固定されている（uv使用時）
+
+### TypeScript
+
+#### 必須項目 (severity: critical)
+
+- [ ] `tsc --noEmit` で型エラーなし
+- [ ] `prettier --check` でフォーマット確認が通過
+- [ ] `eslint` で警告・エラーなし
+- [ ] `package.json` が存在し、依存関係が記載されている
+- [ ] `tsconfig.json` で `strict: true` が有効
+
+#### 推奨項目 (severity: major)
+
+- [ ] `vitest` / `jest` でテストがすべて通過（テストタスクの場合）
+- [ ] カバレッジが 80% 以上（テストタスクの場合）
+- [ ] `@typescript-eslint/no-explicit-any` ルールが有効
+- [ ] 関数の戻り値型が明示されている（主要な関数）
+- [ ] ビルドが成功する (`npm run build`)
+
+### Go
+
+#### 必須項目 (severity: critical)
+
+- [ ] `gofmt -d .` で差分なし（フォーマット済み）
+- [ ] `go vet ./...` でエラーなし
+- [ ] `go build` でビルド成功
+- [ ] `go.mod` と `go.sum` が存在し、整合している
+- [ ] すべての `if err != nil` チェックが適切に処理されている
+
+#### 推奨項目 (severity: major)
+
+- [ ] `golangci-lint run` で警告なし
+- [ ] `go test ./...` でテストがすべて通過（テストタスクの場合）
+- [ ] カバレッジが 80% 以上（テストタスクの場合）
+- [ ] `goimports` でインポート文が整理されている
+- [ ] エラーが適切にラップされている（`%w` 使用）
+
+### Java
+
+#### 必須項目 (severity: critical)
+
+- [ ] `mvn compile` / `./gradlew compileJava` でコンパイル成功
+- [ ] `mvn checkstyle:check` でスタイル違反なし
+- [ ] パッケージ構造が適切（逆ドメイン形式: `com.example.projectname`）
+- [ ] `pom.xml` / `build.gradle` が存在し、依存関係が記載されている
+- [ ] Java バージョンが明示されている
+
+#### 推奨項目 (severity: major)
+
+- [ ] `mvn test` / `./gradlew test` でテストがすべて通過（テストタスクの場合）
+- [ ] JaCoCo カバレッジが 80% 以上（テストタスクの場合）
+- [ ] `mvn spotbugs:check` で警告なし
+- [ ] 適切な例外処理が実装されている（checked exceptions）
+- [ ] Javadoc が主要なクラス・メソッドに存在する
+
+---
+
 ## プロジェクト固有ルール
 
 （ユーザーがここに追記する）

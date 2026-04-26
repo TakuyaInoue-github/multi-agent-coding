@@ -1,517 +1,250 @@
-# マルチセッションワークフロー
-
-複数のClaude Codeセッションを使用してマルチエージェントシステムを実行するためのガイドです。
+# マルチセッションワークフローガイド
 
 ## 概要
 
-このシステムでは、3種類のエージェントが**ファイルを介して**連携します：
+Commander / Observer / Worker の3つの役割を**独立した Claude Code セッション**で自律動作させ、タスクを並列・継続的に処理します。
 
 ```
-Commander (セッション1)  →  spec.md を作成
-    ↓
-Observer (セッション2)   →  spec.md を評価 (Gate1)
-    ↓
-Worker (セッション3+)    →  spec.md を読んで実装、result.md を作成
-    ↓
-Commander (セッション1)  →  result.md を評価
-    ↓
-Observer (セッション2)   →  result.md を評価 (Gate2)
-    ↓
-Commander (セッション1)  →  マージ
+Commander (tmux: commander)
+  → タスク分解・Worker への着手許可・一次評価・マージ
+  → /loop でファイル変更を監視し、次のアクションを自律判断
+
+Observer  (tmux: observer)
+  → Gate1 / Gate2 評価・タイムアウト検知
+  → /loop で spec.md / commander_review.md の出現を監視
+
+Worker-N  (tmux: worker-1, worker-2, ...)
+  → Codex への実装委譲・result.md 作成
+  → /loop で着手許可済みタスクを監視し、空きがあれば取得
 ```
 
-すべての連携は**ファイル経由**で行われ、セッション間で直接通信はしません。
-
-## セットアップ
-
-### 1. システム起動
-
-#### 方法A: tmux自動起動スクリプト（推奨）
-
-```bash
-# すべてのエージェントを一度に起動
-./scripts/launch-agents-worktree.sh
-```
-
-#### 方法B: 手動起動
-
-```bash
-# ターミナル1: Commander
-cd /path/to/multi-agent
-tmux new-session -s commander
-# セッション内で:
-cat .multi-agent/roles/commander/CLAUDE.md  # プロンプトを確認
-claude
-
-# ターミナル2: Observer
-cd /path/to/multi-agent
-tmux new-session -s observer
-# セッション内で:
-cat .multi-agent/roles/observer/CLAUDE.md  # プロンプトを確認
-claude
-
-# ターミナル3: Worker-1
-cd /path/to/multi-agent
-tmux new-session -s worker-1
-# セッション内で:
-cat .multi-agent/roles/worker/CLAUDE.md  # プロンプトを確認
-claude
-```
-
-### 2. セッション間の切り替え
-
-```bash
-# セッション一覧を表示
-tmux list-sessions
-
-# Commanderに接続
-tmux attach-session -t commander
-
-# セッションからデタッチ（Ctrl+B then D）
-
-# Observerに切り替え
-tmux attach-session -t observer
-
-# Worker-1に切り替え
-tmux attach-session -t worker-1
-```
-
-### 3. 初回セットアップ
-
-各セッションの最初のメッセージとして、対応するCLAUDE.mdの内容を伝えます：
-
-**Commander セッション:**
-```
-.multi-agent/roles/commander/CLAUDE.md の内容全体を貼り付け
-```
-
-**Observer セッション:**
-```
-.multi-agent/roles/observer/CLAUDE.md の内容全体を貼り付け
-```
-
-**Worker セッション:**
-```
-.multi-agent/roles/worker/CLAUDE.md の内容全体を貼り付け
-```
-
-### 4. Codex Plugin のセットアップ（Worker のみ）
-
-**重要**: Worker は実装タスクを Codex に委譲します。初回のみ以下のセットアップが必要です。
-
-#### Worker セッションで実行
-
-```bash
-# 1. マーケットプレイスを追加
-/plugin marketplace add openai/codex-plugin-cc
-
-# 2. プラグインをインストール
-/plugin install codex@openai-codex
-
-# 3. プラグインをリロード
-/reload-plugins
-
-# 4. セットアップを実行
-/codex:setup
-```
-
-#### 認証設定
-
-`/codex:setup` を実行すると認証方法を選択できます：
-
-**オプション A: ChatGPT Plus サブスクリプション**
-- ブラウザで認証プロセスが開始されます
-
-**オプション B: OpenAI API キー**
-```bash
-export OPENAI_API_KEY="sk-..."
-```
-
-#### 設定ファイルの確認
-
-プロジェクトルートの `.codex/config.toml` を確認してください：
-
-```toml
-model = "gpt-4o"               # 使用する Codex モデル
-default_background = true      # バックグラウンド実行
-timeout = 3600                 # タイムアウト（秒）
-log_level = "info"             # ログレベル
-```
-
-詳細は `.multi-agent/docs/CODEX_SETUP.md` を参照してください。
-
-#### 動作確認
-
-簡単なテストを実行：
-
-```bash
-/codex:rescue "Create a hello.js file that prints 'Hello, World!'"
-```
-
-成功すれば Codex のセットアップは完了です。
+エージェント間の連携はすべて `runtime/` と `tasks/` のファイル経由で行います。
 
 ---
 
-## ワークフロー
+## アーキテクチャ
 
-### フェーズ1: タスク分解（Commander）
+### ファイルベース連携フロー
 
-1. **Commanderセッションに接続:**
-   ```bash
-   tmux attach-session -t commander
-   ```
+```
+[Commander]                  [Observer]                  [Worker]
+    |                            |                           |
+    | spec.md を作成              |                           |
+    |─────────────────────────>  |                           |
+    |                       Gate1 評価                       |
+    |  <─────────────────────────|                           |
+    |                            |                           |
+    | BOARD.md status: approved  |                           |
+    |────────────────────────────────────────────────────>   |
+    |                            |                   .assigned 作成 +
+    |                            |                   実装開始
+    |                            |                           |
+    | result.md を確認            |                           |
+    | commander_review.md 作成   |                           |
+    |─────────────────────────>  |                           |
+    |                       Gate2 評価                       |
+    |  <─────────────────────────|                           |
+    |                            |                           |
+    | base_branch にマージ        |                           |
+```
 
-2. **ユーザー指示を受ける:**
-   ```
-   ユーザー: 「ユーザー認証機能を追加してください」
-   ```
+### ロック機構
 
-3. **タスク分解を実行:**
-   ```
-   Commander: /decompose-task "ユーザー認証機能を追加" "web-app"
-   ```
+タスクの競合取得を防ぐため、BOARD.md の論理ロックと `.assigned` ファイルの物理ロックを併用します。
 
-   または自然言語で:
-   ```
-   Commander: このタスクを分解して、tasks/task-001/spec.md を作成してください
-   ```
+```
+tasks/task-xxx/
+  spec.md              ← Commander が作成
+  .assigned            ← Worker が作成（ロック取得）。中身: worker-id と取得時刻
+  result.md            ← Worker が作成（完了時）
+  observer_review.md   ← Observer が作成
+  commander_review.md  ← Commander が作成
+```
 
-4. **spec.mdの作成:**
-   Commander が `tasks/task-001/spec.md` を作成します。
+| ロック操作 | 担当 | 手順 |
+|-----------|------|------|
+| ロック取得 | Worker | `.assigned` ファイルを作成し、読み返して自分の worker-id が入っていれば成功 |
+| ロック解放（正常） | Worker | `result.md` 作成後に `.assigned` を削除 |
+| ロック解放（タイムアウト） | Observer | `worker_timeout_hours` 経過かつ `result.md` 未作成なら `.assigned` を削除し EVENTLOG に記録 |
+| status 更新 | Commander | BOARD.md の `status` フィールドを更新（Worker は直接書かない） |
 
-5. **BOARD.mdの更新:**
-   ```
-   Commander: /sync-status sync-board task-001 '{"status":"pending"}'
-   ```
+---
 
-6. **EVENTLOGへの記録:**
-   ```
-   Commander: /sync-status append-event task-001 '{"action":"task_created","actor":"commander","severity":"null","detail":"OAuth2認証実装タスクを作成"}'
-   ```
+## セットアップ
 
-7. **デタッチ:**
-   Ctrl+B then D でセッションからデタッチ
+### 前提条件
 
-### フェーズ2: Gate1評価（Observer）
+- tmux がインストールされていること
+- Claude Code CLI (`claude`) が使えること
+- Codex Plugin がセットアップ済みであること（Worker のみ）
 
-1. **Observerセッションに接続:**
-   ```bash
-   tmux attach-session -t observer
-   ```
+Codex Plugin のセットアップは `.multi-agent/docs/CODEX_SETUP.md` を参照してください。
 
-2. **自律チェックを指示:**
-   ```
-   Observer: runtime/BOARD.md を確認して、新しいタスクがあればGate1評価を実行してください
-   ```
+### 起動手順
 
-   または直接:
-   ```
-   Observer: /evaluate-gate 1 task-001 spec_review
-   ```
+```bash
+# 1. runtime/ を初期化
+./scripts/setup.sh
 
-3. **評価結果の確認:**
-   Observer が `tasks/task-001/observer_review.md` を作成します。
+# 2. エージェントを起動（tmux セッションを3つ作成）
+./.multi-agent/scripts/launch-agents-worktree.sh
 
-4. **結果に応じた処理:**
+# 3. 各セッションに接続して /loop を開始
+tmux attach-session -t commander
+# Commander セッションで:
+# /loop 5m commander のループプロンプト（後述）
 
-   **Pass の場合:**
-   ```
-   Observer: /sync-status append-event task-001 '{"action":"gate1_pass","actor":"observer","severity":"null","detail":"Gate1評価パス"}'
-   ```
+# Ctrl+B → D でデタッチ後:
+tmux attach-session -t observer
+# Observer セッションで:
+# /loop 5m observer のループプロンプト（後述）
 
-   **Fail の場合:**
-   ```
-   Observer: runtime/DISCUSSION.md に問題を起票してください
-   Observer: /sync-status append-event task-001 '{"action":"gate1_fail","actor":"observer","severity":"critical","detail":"output_artifacts重複"}'
-   ```
+# Ctrl+B → D でデタッチ後:
+tmux attach-session -t worker-1
+# Worker セッションで:
+# /loop 5m worker のループプロンプト（後述）
+```
 
-5. **デタッチ:**
-   Ctrl+B then D
+### /loop 起動プロンプト
 
-### フェーズ3: 議論（Commander ⇔ Observer）
-
-**Fail の場合のみ:**
-
-1. **Commanderセッションに戻る:**
-   ```bash
-   tmux attach-session -t commander
-   ```
-
-2. **DISCUSSION.mdを確認:**
-   ```
-   Commander: runtime/DISCUSSION.md を読んで、Observerの指摘に対応してください
-   ```
-
-3. **修正を実施:**
-   ```
-   Commander: tasks/task-001/spec.md を修正します
-   ```
-
-4. **再評価を依頼:**
-   Observerセッションに切り替えて再評価
-
-### フェーズ4: Worker着手許可（Commander）
-
-Gate1がPassした後:
-
-1. **Commanderセッションで:**
-   ```
-   Commander: /sync-status sync-board task-001 '{"status":"in_progress","assigned_at":"2025-04-04T10:30:00"}'
-   Commander: /sync-status append-event task-001 '{"action":"task_assigned","actor":"commander","severity":"null","detail":"Worker-1に着手許可"}'
-   ```
-
-2. **Worker-1に通知:**
-   Workerセッションに切り替えて作業開始を指示
-
-### フェーズ5: 実装（Worker）
-
-1. **Worker-1セッションに接続:**
-   ```bash
-   tmux attach-session -t worker-1
-   ```
-
-2. **spec.mdを読む:**
-   ```
-   Worker: tasks/task-001/spec.md を読んで、作業を開始してください
-   ```
-
-3. **ブランチ作成:**
-   ```
-   Worker: task/task-001 ブランチを作成してください
-   ```
-
-4. **実装:**
-   Workerが指示に従ってコーディング
-
-5. **中間報告（オプション）:**
-   ```
-   Worker: tasks/task-001/result.md に中間報告を記録してください
-   ```
-
-6. **完了:**
-   ```
-   Worker: 実装が完了しました。result.md を最終報告として更新してください
-   ```
-
-7. **コミット:**
-   ```
-   Worker: git commit -m "feat: task-001 OAuth2認証実装"
-   ```
-
-8. **デタッチ:**
-   Ctrl+B then D
-
-### フェーズ6: Commander一次評価
-
-1. **Commanderセッションで:**
-   ```
-   Commander: tasks/task-001/result.md を確認して、commander_review.md を作成してください
-   ```
-
-2. **レビュー作成:**
-   Commander が `tasks/task-001/commander_review.md` を作成
-
-3. **イベント記録:**
-   ```
-   Commander: /sync-status append-event task-001 '{"action":"task_completed","actor":"commander","severity":"null","detail":"Commander一次評価完了"}'
-   ```
-
-### フェーズ7: Gate2評価（Observer）
-
-1. **Observerセッションで:**
-   ```
-   Observer: /evaluate-gate 2 task-001 result_review
-   ```
-
-2. **評価結果:**
-   Observer が `tasks/task-001/observer_review.md` を更新
-
-3. **Pass の場合:**
-   ```
-   Observer: /sync-status append-event task-001 '{"action":"gate2_pass","actor":"observer","severity":"null","detail":"Gate2評価パス"}'
-   ```
-
-### フェーズ8: マージ（Commander）
-
-Gate2がPassした後:
-
-1. **Commanderセッションで:**
-   ```
-   Commander: task/task-001 ブランチを master にマージしてください
-   ```
-
-2. **ステータス更新:**
-   ```
-   Commander: /sync-status sync-board task-001 '{"status":"completed","completed_at":"2025-04-04T15:00:00"}'
-   ```
-
-3. **コンテキスト更新:**
-   ```
-   Commander: /sync-status update-context '{"section":"現時点の判断基準","content":"task-001完了: OAuth2認証はbcrypt@5.0.0を使用"}'
-   ```
-
-## ファイルベース連携の仕組み
-
-### 共有ファイル
-
-すべてのセッションが以下のファイルを共有します：
-
-| ファイル | 役割 | 読み書き権限 |
-|---------|------|------------|
-| `runtime/BOARD.md` | タスク状態管理 | Commander: R/W, Observer: R, Worker: R |
-| `runtime/CONTEXT.md` | 方針・判断基準 | Commander: R/W, Observer: R, Worker: R |
-| `runtime/DISCUSSION.md` | 議論ログ | Commander: R/W, Observer: R/W, Worker: R |
-| `runtime/EVENTLOG.json` | イベント記録 | Commander: R/W, Observer: R/W, Worker: R |
-| `runtime/SUMMARY.md` | 進捗サマリー | Commander: R/W, Observer: R/W, Worker: R |
-| `tasks/task-xxx/spec.md` | タスク仕様 | Commander: W, Observer: R, Worker: R |
-| `tasks/task-xxx/result.md` | 実装結果 | Commander: R, Observer: R, Worker: W |
-| `tasks/task-xxx/commander_review.md` | Commander評価 | Commander: W, Observer: R, Worker: R |
-| `tasks/task-xxx/observer_review.md` | Observer評価 | Commander: R, Observer: W, Worker: R |
-
-### ポーリングパターン
-
-各エージェントは定期的にファイルの変更をチェックします：
+各セッションで以下のプロンプトを使って `/loop` を開始します。
 
 **Commander:**
-- `tasks/task-xxx/result.md` の完了を待つ（5分ごと）
-- `runtime/DISCUSSION.md` のObserver応答を待つ（2分ごと）
+```
+/loop 5m .multi-agent/roles/commander/CLAUDE.md を読んで自律ループを実行してください。runtime/BOARD.md と runtime/EVENTLOG.json を確認し、次に取るべきアクションがあれば実行してください。
+```
 
 **Observer:**
-- `tasks/task-xxx/spec.md` の作成を検知（自律チェック）
-- `tasks/task-xxx/commander_review.md` の作成を検知（自律チェック）
-- タイムアウトを検知（1時間ごと）
+```
+/loop 5m .multi-agent/roles/observer/CLAUDE.md を読んで自律チェックを実行してください。未評価の spec.md と commander_review.md を探し、あれば評価を実施してください。
+```
 
 **Worker:**
-- `tasks/task-xxx/spec.md` の割り当てを待つ（BOARD.md を確認）
-
-### ファイルロック規約
-
-複数セッションが同じファイルを編集する場合、以下の規約に従います：
-
-1. **読み込み専用ファイル:**
-   - `spec.md`: Workerは読み込みのみ
-   - `result.md`: Commander/Observerは読み込みのみ
-
-2. **追記のみファイル:**
-   - `DISCUSSION.md`: 常に末尾に追記
-   - `EVENTLOG.json`: 常に配列の末尾に追加
-
-3. **排他的書き込み:**
-   - `BOARD.md`: Commander のみが更新
-   - 同時編集が発生した場合は git の merge conflict として解決
-
-## トラブルシューティング
-
-### セッションが見つからない
-
-```bash
-tmux list-sessions
+```
+/loop 5m .multi-agent/roles/worker/CLAUDE.md を読んで自律ループを実行してください。BOARD.md で approved かつ .assigned が存在しないタスクを探し、あれば .assigned を作成して実装を開始してください。
 ```
 
-セッションがない場合は再起動:
-```bash
-./scripts/launch-agents-worktree.sh
+---
+
+## ワークフロー詳細
+
+### Step 1: Commander — タスク分解
+
+ユーザーが Commander セッションに指示を出すか、Commander が自律ループ中に未処理タスクを検出します。
+
+1. `runtime/CONTEXT.md` / `runtime/BOARD.md` を読む
+2. タスクを分解して `tasks/task-xxx/spec.md` を作成
+3. `tasks/task-xxx/AGENTS.md` を作成（Codex 向け）
+4. BOARD.md の `status` を `pending` に更新
+5. EVENTLOG に `task_created` を記録
+
+→ Observer が spec.md の出現を検知して自律的に Gate1 評価を開始
+
+### Step 2: Observer — Gate1 評価
+
+Observer の `/loop` が `spec.md` 存在 + `observer_review.md(gate1)` 未作成を検知します。
+
+1. `spec.md` を読んで RULEBOOK に従い評価
+2. `tasks/task-xxx/observer_review.md` を作成（`gate: 1`）
+3. EVENTLOG に記録
+4. verdict に応じて:
+   - **pass**: BOARD.md の `status` を `approved` に更新（Commander 経由）
+   - **fail**: `runtime/DISCUSSION.md` に起票 → Commander が検知して対応
+
+### Step 3: Worker — 実装
+
+Worker の `/loop` が `status: approved` + `.assigned` 未作成を検知します。
+
+1. `tasks/task-xxx/.assigned` を作成（`worker_id: worker-1`, `acquired_at: timestamp`）
+2. 読み返して自分の worker-id が入っていることを確認（ロック確認）
+3. `task/task-xxx` ブランチを作成
+4. `/codex:rescue --background` で Codex に実装を委譲
+5. 完了後 `tasks/task-xxx/result.md` を作成
+6. `.assigned` を削除（ロック解放）
+
+→ Commander が result.md の出現を検知して自律的に一次評価を開始
+
+### Step 4: Commander — 一次評価
+
+Commander の `/loop` が `result.md` 存在 + `commander_review.md` 未作成を検知します。
+
+1. `spec.md` と `result.md` を突き合わせる
+2. `output_artifacts` の存在を確認
+3. `tasks/task-xxx/commander_review.md` を作成
+4. EVENTLOG に記録
+
+→ Observer が commander_review.md の出現を検知して自律的に Gate2 評価を開始
+
+### Step 5: Observer — Gate2 評価
+
+Observer の `/loop` が `commander_review.md` 存在 + `observer_review.md(gate2)` 未作成を検知します。
+
+1. `spec.md` / `result.md` / `commander_review.md` を読む
+2. 言語固有の品質チェックを実行
+3. `tasks/task-xxx/observer_review.md` を作成（`gate: 2`）
+4. verdict に応じて:
+   - **pass**: EVENTLOG に記録（Commander がマージ）
+   - **fail**: `runtime/DISCUSSION.md` に起票
+
+### Step 6: Commander — マージ
+
+Commander の `/loop` が Gate2 pass を検知します。
+
+1. `task/task-xxx` → `base_branch` にマージ
+2. BOARD.md の `status` を `completed` に更新
+3. EVENTLOG に `task_completed` を記録
+
+---
+
+## 複数タスクの並列実行
+
+`parallel_ok: true` のタスクは複数 Worker が同時に処理できます。
+
+```
+task-001 (parallel_ok: true) ─┐
+task-002 (parallel_ok: true) ─┼─ worker-1, worker-2 が同時に .assigned を取得
+task-003 (depends_on: [001])  ─┘ ← task-001 の status: completed 後に approved になる
 ```
 
-### ファイルが見つからない
+Worker を増やす場合は起動スクリプトで `worker-2`, `worker-3` セッションを追加します。
 
-**runtime/ ファイルが存在しない:**
-```bash
-./scripts/launch-agents-worktree.sh
-```
-起動スクリプトが自動的に作成します。
+---
 
-### 競合が発生した
+## タイムアウトとエラー処理
 
-```bash
-# 手動でマージ
-git status
-git add .
-git commit -m "Merge conflict resolution"
-```
+| 状況 | 検知 | 対処 |
+|-----|------|------|
+| Worker がクラッシュ | Observer: `worker_timeout_hours` 経過 + `result.md` 未作成 | `.assigned` を削除 → 別 Worker が再取得 |
+| Codex が繰り返し失敗 | Worker: 3回以上エラー | `result.md` に `status: blocked` で記録 → Commander が検知して対応 |
+| Observer が応答しない | Commander: `observer_timeout_hours` 経過 | EVENTLOG に記録 → ユーザーに通知 |
+| Commander が議論に応答しない | Observer: `commander_response_hours` 経過 | `commander_timeout` を記録 → ユーザーに直接通知 |
 
-### Observer が反応しない
+---
 
-Observerセッションに接続して手動で確認:
-```bash
-tmux attach-session -t observer
-```
+## セッション中断・再開
+
+### 中断時
+
+各セッションで `/loop` を停止（Ctrl+C）します。Commander に以下を依頼します：
 
 ```
-Observer: runtime/BOARD.md を確認して、未評価のタスクがあれば評価してください
+ここで一旦止めてください。runtime/CONTEXT.md を更新して終了してください。
 ```
 
-### Worker が作業を開始しない
+### 再開時
 
-Workerセッションで spec.md を確認:
-```bash
-tmux attach-session -t worker-1
-```
+各セッションで再度 `/loop` プロンプトを実行します。
 
 ```
-Worker: tasks/ ディレクトリを確認して、自分に割り当てられたタスクがあるか確認してください
+/loop 5m .multi-agent/roles/commander/CLAUDE.md を読んで自律ループを実行してください。...
 ```
 
-## ベストプラクティス
+Commander は `runtime/CONTEXT.md` → `runtime/BOARD.md` → `runtime/EVENTLOG.json` の順で状態を復元し、中断前の続きから再開します。
 
-### 1. セッションの命名規則
+---
 
-- `commander`: 常に1つ
-- `observer`: 常に1つ
-- `worker-N`: 複数可能（worker-1, worker-2, ...）
+## 関連ドキュメント
 
-### 2. 作業の可視化
-
-定期的に BOARD.md を確認:
-```bash
-cat runtime/BOARD.md
-```
-
-### 3. ログの確認
-
-EVENTLOG.json で全履歴を確認:
-```bash
-cat runtime/EVENTLOG.json | jq '.'
-```
-
-最新10件のイベント:
-```bash
-cat runtime/EVENTLOG.json | jq '.[-10:]'
-```
-
-### 4. セッションの整理
-
-不要なセッションを終了:
-```bash
-tmux kill-session -t worker-2
-```
-
-すべてのセッションを終了:
-```bash
-tmux kill-server
-```
-
-### 5. バックアップ
-
-重要な作業前にコミット:
-```bash
-git add -A
-git commit -m "checkpoint: before major task"
-```
-
-## まとめ
-
-マルチセッションワークフローの要点：
-
-1. **3つのセッション**: Commander、Observer、Worker
-2. **ファイル経由で連携**: runtime/ と tasks/ ディレクトリを共有
-3. **独立した動作**: 各セッションは自律的に動作
-4. **Skills で効率化**: `/decompose-task`、`/evaluate-gate`、`/sync-status`
-5. **tmux で管理**: セッションの切り替えとデタッチ
-
-次のステップ:
-1. `./scripts/launch-agents-worktree.sh` でシステム起動
-2. Commanderで最初のタスクを分解
-3. ワークフローに従って実行
-
-詳細は [.multi-agent/docs/GUIDE.md](GUIDE.md) を参照してください。
+- [使い方ガイド](GUIDE.md) - セットアップ・ファイル構成の詳細
+- [Codex セットアップ](CODEX_SETUP.md) - Worker の Codex 統合
+- [ブランチ管理戦略](BRANCH_STRATEGY.md) - Git ブランチ運用ルール

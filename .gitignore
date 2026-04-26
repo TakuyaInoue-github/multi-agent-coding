@@ -65,3 +65,6 @@ node_modules/
 # Codex Plugin (may contain API keys)
 .codex/
 !.codex/config.toml  # Config template is safe to commit
+
+# Claude Code local settings (personal/machine-specific)
+.claude/settings.local.json

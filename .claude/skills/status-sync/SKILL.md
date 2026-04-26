@@ -230,7 +230,7 @@ tasks:
 
 ```
 Error: runtime/BOARD.md が存在しません
-Action: .multi-agent/templates/session/BOARD.md から初期化するか、ユーザーに確認
+Action: scripts/setup.sh を実行して初期化するか、ユーザーに確認
 ```
 
 ### YAML/JSON解析エラー

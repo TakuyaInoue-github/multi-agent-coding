@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "defaultMode": "dontAsk",
+    "allow": [
+      "Read(**)",
+      "Write(./runtime/BOARD.md)",
+      "Write(./runtime/CONTEXT.md)",
+      "Write(./runtime/SUMMARY.md)",
+      "Write(./tasks/*/spec.md)",
+      "Write(./tasks/*/commander_review.md)",
+      "Edit(./runtime/BOARD.md)",
+      "Edit(./runtime/CONTEXT.md)",
+      "Edit(./runtime/SUMMARY.md)",
+      "Edit(./tasks/*/spec.md)",
+      "Edit(./tasks/*/commander_review.md)",
+      "Bash(git merge *)",
+      "Bash(git push *)"
+    ],
+    "deny": [
+      "Write(./tasks/*/result.md)",
+      "Write(./tasks/*/observer_review.md)",
+      "Write(./tasks/*/.assigned)",
+      "Edit(./tasks/*/result.md)",
+      "Edit(./tasks/*/observer_review.md)",
+      "Edit(./tasks/*/.assigned)",
+      "Write(./runtime/EVENTLOG.json)",
+      "Write(./runtime/DISCUSSION.md)",
+      "Edit(./runtime/EVENTLOG.json)",
+      "Edit(./runtime/DISCUSSION.md)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [{"type": "command", "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/validate-bash.sh"}]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [{"type": "command", "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/protect-files.sh"}]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash|Edit|Write",
+        "hooks": [{"type": "command", "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/log-activity.sh"}]
+      }
+    ]
+  }
+}
